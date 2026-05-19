@@ -1,824 +1,2431 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mapa PDVs</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', sans-serif; background: #0f1117; color: #e2e8f0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa PDVs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-/* ── UPLOAD SCREEN ── */
-#upload-screen {
-  position: fixed; inset: 0; z-index: 9000;
-  background: #0f1117; display: flex; align-items: center; justify-content: center;
-}
-.upload-card {
-  background: #161b27; border: 1px solid #1e2d45; border-radius: 16px;
-  padding: 48px 56px; text-align: center; max-width: 480px; width: 90%;
-}
-.upload-logo { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 6px; }
-.upload-logo span { color: #38bdf8; }
-.upload-sub { font-size: 13px; color: #64748b; margin-bottom: 36px; }
-.drop-zone {
-  border: 2px dashed #1e2d45; border-radius: 10px; padding: 36px 24px;
-  cursor: pointer; transition: all .2s; position: relative;
-}
-.drop-zone:hover, .drop-zone.drag { border-color: #0ea5e9; background: rgba(14,165,233,.05); }
-.drop-icon { font-size: 36px; margin-bottom: 10px; }
-.drop-title { font-size: 14px; font-weight: 600; color: #e2e8f0; margin-bottom: 4px; }
-.drop-hint { font-size: 11.5px; color: #475569; }
-.drop-hint b { color: #94a3b8; }
-#file-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.upload-cols {
-  margin-top: 28px; background: #0f1117; border: 1px solid #1e2d45;
-  border-radius: 8px; padding: 14px 16px; text-align: left;
-}
-.upload-cols-title { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #475569; margin-bottom: 10px; }
-.col-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.col-tag {
-  font-size: 10.5px; padding: 3px 9px; border-radius: 5px;
-  background: #1a2235; border: 1px solid #1e2d45; color: #94a3b8;
-}
-.col-tag.req { border-color: #0ea5e9; color: #38bdf8; }
-.upload-error {
-  margin-top: 14px; padding: 10px 14px; background: #1a0a0a;
-  border: 1px solid #7f1d1d; border-radius: 7px; font-size: 11.5px; color: #f87171;
-  display: none;
-}
-.upload-loading {
-  margin-top: 14px; padding: 10px 14px; background: #0c1a2b;
-  border: 1px solid #0e2036; border-radius: 7px; font-size: 11.5px; color: #38bdf8;
-  display: none;
-}
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
 
-/* ── APP (hidden until loaded) ── */
-#app { display: none; flex-direction: column; height: 100vh; overflow: hidden; }
+    /* ── UPLOAD SCREEN ── */
+    #upload-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: #0f1117;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-header {
-  background: #161b27; border-bottom: 1px solid #1e2d45;
-  padding: 0 16px; height: 52px; display: flex; align-items: center;
-  gap: 12px; flex-shrink: 0; z-index: 1000;
-}
-.logo { font-weight: 700; font-size: 15px; color: #fff; }
-.logo span { color: #38bdf8; }
-.hdr-sep { width: 1px; height: 20px; background: #1e2d45; }
-.hdr-info { font-size: 11.5px; color: #64748b; }
-.hdr-info b { color: #94a3b8; font-weight: 600; }
-.hdr-right { margin-left: auto; display: flex; gap: 6px; }
-.hbtn {
-  padding: 5px 12px; border-radius: 5px; border: 1px solid #1e2d45;
-  background: #1a2235; color: #94a3b8; font-size: 11.5px;
-  font-family: 'Inter', sans-serif; cursor: pointer; transition: all .15s; font-weight: 500;
-}
-.hbtn:hover { background: #1e2d45; color: #e2e8f0; }
-.hbtn.on { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
+    .upload-card {
+      background: #161b27;
+      border: 1px solid #1e2d45;
+      border-radius: 16px;
+      padding: 48px 56px;
+      text-align: center;
+      max-width: 480px;
+      width: 90%;
+    }
 
-#status {
-  height: 28px; display: flex; align-items: center; gap: 8px;
-  padding: 0 16px; font-size: 11px; background: #0c1a2b;
-  border-bottom: 1px solid #0e2036; color: #38bdf8; flex-shrink: 0;
-}
-.sdot { width: 5px; height: 5px; border-radius: 50%; background: #38bdf8; animation: blink 1.4s infinite; }
-@keyframes blink { 0%,100%{opacity:1}50%{opacity:.2} }
-#status.done { background: transparent; color: #475569; border-color: transparent; }
-#status.done .sdot { background: #475569; animation: none; }
-#prog-wrap { height: 3px; background: #1e2d45; flex-shrink: 0; }
-#prog-fill { height: 100%; width: 0; background: linear-gradient(90deg,#0ea5e9,#6366f1); transition: width .4s; }
+    .upload-logo {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
 
-.layout { display: flex; flex: 1; overflow: hidden; }
-#sidebar {
-  width: 290px; background: #111827; border-right: 1px solid #1e2d45;
-  overflow-y: auto; flex-shrink: 0;
-  scrollbar-width: thin; scrollbar-color: #1e2d45 transparent;
-}
-.sb-block { padding: 12px 14px; border-bottom: 1px solid #1a2235; }
-.sb-lbl { font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #475569; margin-bottom: 8px; }
+    .upload-logo span {
+      color: #38bdf8;
+    }
 
-.mode-row { display: flex; gap: 4px; }
-.mode-btn {
-  flex: 1; padding: 7px 4px; border-radius: 5px; border: 1px solid #1e2d45;
-  background: #1a2235; color: #64748b; font-size: 11px; font-weight: 600;
-  font-family: 'Inter', sans-serif; cursor: pointer; text-align: center; transition: all .15s;
-}
-.mode-btn.on { background: #0ea5e9 !important; border-color: #0ea5e9 !important; color: #fff !important; }
+    .upload-sub {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 36px;
+    }
 
-/* CHECKBOX ESTILO EXCEL */
-.xl-cb {
-  width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0;
-  border: 1.5px solid #334155; background: transparent;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .12s; position: relative;
-}
-.xl-cb.checked { background: #0ea5e9; border-color: #0ea5e9; }
-.xl-cb.checked::after {
-  content: ''; display: block;
-  width: 4px; height: 7px;
-  border: 2px solid #fff; border-top: none; border-left: none;
-  transform: rotate(45deg) translate(-1px,-1px);
-}
-.xl-cb.indeterminate { background: #0ea5e9; border-color: #0ea5e9; }
-.xl-cb.indeterminate::after {
-  content: ''; display: block;
-  width: 7px; height: 2px; background: #fff; border-radius: 1px;
-}
+    .drop-zone {
+      border: 2px dashed #1e2d45;
+      border-radius: 10px;
+      padding: 36px 24px;
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+    }
 
-/* LEGENDA SETORES */
-.setor-header {
-  display: flex; align-items: center; gap: 6px;
-  padding: 4px 0 6px; border-bottom: 1px solid #1a2235; margin-bottom: 4px;
-  cursor: pointer;
-}
-.setor-header:hover { background: rgba(255,255,255,.03); }
-.setor-header-lbl { font-size: 10px; color: #64748b; flex: 1; font-weight: 600; }
-.setor-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 5px 2px; cursor: pointer; border-radius: 4px; transition: all .12s;
-}
-.setor-item:hover { background: rgba(255,255,255,.04); }
-.setor-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(255,255,255,.2); transition: opacity .12s; }
-.setor-name { font-size: 11px; flex: 1; line-height: 1.3; transition: color .12s; }
-.setor-count { font-size: 10px; color: #475569; background: #1a2235; padding: 1px 7px; border-radius: 8px; }
-.setor-item.off .setor-name { color: #334155; }
-.setor-item.off .setor-dot { opacity: .2; }
+    .drop-zone:hover,
+    .drop-zone.drag {
+      border-color: #0ea5e9;
+      background: rgba(14, 165, 233, .05);
+    }
 
-/* LEGENDA BRICKS */
-.brick-search {
-  width: 100%; background: #0f1117; border: 1px solid #1e2d45; color: #e2e8f0;
-  padding: 5px 8px; border-radius: 4px; font-size: 10.5px;
-  font-family: 'Inter', sans-serif; outline: none; margin-bottom: 2px;
-}
-.brick-search:focus { border-color: #0ea5e9; }
-.brick-header {
-  display: flex; align-items: center; gap: 6px;
-  padding: 4px 2px 5px; border-bottom: 1px solid #1a2235; margin-bottom: 3px;
-  cursor: pointer;
-}
-.brick-header:hover { background: rgba(255,255,255,.03); }
-.brick-header-lbl { font-size: 10px; color: #64748b; flex: 1; font-weight: 600; }
-.brick-list { max-height: 280px; overflow-y: auto; }
-.brick-item {
-  display: flex; align-items: center; gap: 6px;
-  padding: 3px 2px; cursor: pointer; transition: all .12s;
-  font-size: 10px; border-radius: 3px;
-}
-.brick-item:hover { background: rgba(255,255,255,.04); }
-.brick-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; transition: opacity .12s; }
-.brick-name { flex: 1; color: #94a3b8; line-height: 1.2; transition: color .12s; }
-.brick-name.off { color: #334155; }
-.brick-dot.off { opacity: .2; }
-.brick-count { color: #475569; font-size: 9px; }
+    .drop-icon {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
 
-/* STATS */
-.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.stat { background: #0f1117; border: 1px solid #1e2d45; border-radius: 5px; padding: 7px 9px; }
-.stat-n { font-size: 20px; font-weight: 700; color: #38bdf8; }
-.stat-l { font-size: 9.5px; color: #475569; margin-top: 1px; }
+    .drop-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 4px;
+    }
 
-.sb-search {
-  width: 100%; background: #0f1117; border: 1px solid #1e2d45; color: #e2e8f0;
-  padding: 6px 9px; border-radius: 5px; font-size: 11.5px;
-  font-family: 'Inter', sans-serif; outline: none; transition: border-color .15s;
-}
-.sb-search:focus { border-color: #0ea5e9; }
-.sb-search::placeholder { color: #334155; }
+    .drop-hint {
+      font-size: 11.5px;
+      color: #475569;
+    }
 
-#map { flex: 1; }
+    .drop-hint b {
+      color: #94a3b8;
+    }
 
-.leaflet-tooltip.pdv-tip {
-  background: #161b27; border: 1px solid #1e2d45; color: #e2e8f0;
-  padding: 9px 12px; border-radius: 7px; font-family: 'Inter', sans-serif;
-  font-size: 11px; box-shadow: 0 6px 20px rgba(0,0,0,.7); white-space: normal; max-width: 260px;
-}
-.leaflet-tooltip.pdv-tip:before { display: none; }
-.tip-name { font-weight: 700; font-size: 12px; color: #fff; margin-bottom: 3px; }
-.tip-row { color: #94a3b8; line-height: 1.4; }
-.tip-row b { color: #cbd5e1; }
-.tip-setor { display: inline-block; margin-top: 5px; padding: 2px 7px; border-radius: 8px; font-size: 9.5px; font-weight: 700; }
+    #file-input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
 
-.leaflet-popup-content-wrapper {
-  background: #161b27 !important; border: 1px solid #1e2d45 !important;
-  border-radius: 8px !important; box-shadow: 0 8px 24px rgba(0,0,0,.7) !important; color: #e2e8f0 !important;
-}
-.leaflet-popup-tip { background: #161b27 !important; }
-.leaflet-popup-content { margin: 12px 14px !important; }
-.pop-h { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-.pop-cnpj { font-size: 9.5px; color: #38bdf8; font-family: monospace; margin-bottom: 7px; }
-.pop-row { font-size: 11px; color: #94a3b8; margin-bottom: 3px; line-height: 1.4; }
-.pop-row b { color: #cbd5e1; }
-.pop-warn { margin-top: 7px; padding: 5px 8px; background: #1a1200; border: 1px solid #713f12; border-radius: 5px; font-size: 10px; color: #fbbf24; }
-</style>
+    .upload-cols {
+      margin-top: 28px;
+      background: #0f1117;
+      border: 1px solid #1e2d45;
+      border-radius: 8px;
+      padding: 14px 16px;
+      text-align: left;
+    }
+
+    .upload-cols-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 10px;
+    }
+
+    .col-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .col-tag {
+      font-size: 10.5px;
+      padding: 3px 9px;
+      border-radius: 5px;
+      background: #1a2235;
+      border: 1px solid #1e2d45;
+      color: #94a3b8;
+    }
+
+    .col-tag.req {
+      border-color: #0ea5e9;
+      color: #38bdf8;
+    }
+
+    .upload-error {
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: #1a0a0a;
+      border: 1px solid #7f1d1d;
+      border-radius: 7px;
+      font-size: 11.5px;
+      color: #f87171;
+      display: none;
+    }
+
+    .upload-loading {
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: #0c1a2b;
+      border: 1px solid #0e2036;
+      border-radius: 7px;
+      font-size: 11.5px;
+      color: #38bdf8;
+      display: none;
+    }
+
+    /* ── APP (hidden until loaded) ── */
+    #app {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    header {
+      background: #161b27;
+      border-bottom: 1px solid #1e2d45;
+      padding: 0 16px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      z-index: 1000;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 15px;
+      color: #fff;
+    }
+
+    .logo span {
+      color: #38bdf8;
+    }
+
+    .hdr-sep {
+      width: 1px;
+      height: 20px;
+      background: #1e2d45;
+    }
+
+    .hdr-info {
+      font-size: 11.5px;
+      color: #64748b;
+    }
+
+    .hdr-info b {
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .hdr-right {
+      margin-left: auto;
+      display: flex;
+      gap: 6px;
+    }
+
+    .hbtn {
+      padding: 5px 12px;
+      border-radius: 5px;
+      border: 1px solid #1e2d45;
+      background: #1a2235;
+      color: #94a3b8;
+      font-size: 11.5px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all .15s;
+      font-weight: 500;
+    }
+
+    .hbtn:hover {
+      background: #1e2d45;
+      color: #e2e8f0;
+    }
+
+    .hbtn.on {
+      background: #0ea5e9;
+      border-color: #0ea5e9;
+      color: #fff;
+    }
+
+    #status {
+      height: 28px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      font-size: 11px;
+      background: #0c1a2b;
+      border-bottom: 1px solid #0e2036;
+      color: #38bdf8;
+      flex-shrink: 0;
+    }
+
+    .sdot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #38bdf8;
+      animation: blink 1.4s infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .2
+      }
+    }
+
+    #status.done {
+      background: transparent;
+      color: #475569;
+      border-color: transparent;
+    }
+
+    #status.done .sdot {
+      background: #475569;
+      animation: none;
+    }
+
+    #prog-wrap {
+      height: 3px;
+      background: #1e2d45;
+      flex-shrink: 0;
+    }
+
+    #prog-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #0ea5e9, #6366f1);
+      transition: width .4s;
+    }
+
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #sidebar {
+      width: 290px;
+      background: #111827;
+      border-right: 1px solid #1e2d45;
+      overflow-y: auto;
+      flex-shrink: 0;
+      scrollbar-width: thin;
+      scrollbar-color: #1e2d45 transparent;
+    }
+
+    .sb-block {
+      padding: 12px 14px;
+      border-bottom: 1px solid #1a2235;
+    }
+
+    .sb-lbl {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 8px;
+    }
+
+    .mode-row {
+      display: flex;
+      gap: 4px;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 7px 4px;
+      border-radius: 5px;
+      border: 1px solid #1e2d45;
+      background: #1a2235;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      text-align: center;
+      transition: all .15s;
+    }
+
+    .mode-btn.on {
+      background: #0ea5e9 !important;
+      border-color: #0ea5e9 !important;
+      color: #fff !important;
+    }
+
+    /* CHECKBOX ESTILO EXCEL */
+    .xl-cb {
+      width: 13px;
+      height: 13px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      border: 1.5px solid #334155;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .12s;
+      position: relative;
+    }
+
+    .xl-cb.checked {
+      background: #0ea5e9;
+      border-color: #0ea5e9;
+    }
+
+    .xl-cb.checked::after {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 7px;
+      border: 2px solid #fff;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg) translate(-1px, -1px);
+    }
+
+    .xl-cb.indeterminate {
+      background: #0ea5e9;
+      border-color: #0ea5e9;
+    }
+
+    .xl-cb.indeterminate::after {
+      content: '';
+      display: block;
+      width: 7px;
+      height: 2px;
+      background: #fff;
+      border-radius: 1px;
+    }
+
+    /* LEGENDA SETORES */
+    .setor-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 0 6px;
+      border-bottom: 1px solid #1a2235;
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+
+    .setor-header:hover {
+      background: rgba(255, 255, 255, .03);
+    }
+
+    .setor-header-lbl {
+      font-size: 10px;
+      color: #64748b;
+      flex: 1;
+      font-weight: 600;
+    }
+
+    .setor-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all .12s;
+    }
+
+    .setor-item:hover {
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .setor-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 2px solid rgba(255, 255, 255, .2);
+      transition: opacity .12s;
+    }
+
+    .setor-name {
+      font-size: 11px;
+      flex: 1;
+      line-height: 1.3;
+      transition: color .12s;
+    }
+
+    .setor-count {
+      font-size: 10px;
+      color: #475569;
+      background: #1a2235;
+      padding: 1px 7px;
+      border-radius: 8px;
+    }
+
+    .setor-item.off .setor-name {
+      color: #334155;
+    }
+
+    .setor-item.off .setor-dot {
+      opacity: .2;
+    }
+
+    /* LEGENDA BRICKS */
+    .brick-search {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #1e2d45;
+      color: #e2e8f0;
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      margin-bottom: 2px;
+    }
+
+    .brick-search:focus {
+      border-color: #0ea5e9;
+    }
+
+    .brick-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 2px 5px;
+      border-bottom: 1px solid #1a2235;
+      margin-bottom: 3px;
+      cursor: pointer;
+    }
+
+    .brick-header:hover {
+      background: rgba(255, 255, 255, .03);
+    }
+
+    .brick-header-lbl {
+      font-size: 10px;
+      color: #64748b;
+      flex: 1;
+      font-weight: 600;
+    }
+
+    .brick-list {
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .brick-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 2px;
+      cursor: pointer;
+      transition: all .12s;
+      font-size: 10px;
+      border-radius: 3px;
+    }
+
+    .brick-item:hover {
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .brick-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      transition: opacity .12s;
+    }
+
+    .brick-name {
+      flex: 1;
+      color: #94a3b8;
+      line-height: 1.2;
+      transition: color .12s;
+    }
+
+    .brick-name.off {
+      color: #334155;
+    }
+
+    .brick-dot.off {
+      opacity: .2;
+    }
+
+    .brick-count {
+      color: #475569;
+      font-size: 9px;
+    }
+
+    /* STATS */
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .stat {
+      background: #0f1117;
+      border: 1px solid #1e2d45;
+      border-radius: 5px;
+      padding: 7px 9px;
+    }
+
+    .stat-n {
+      font-size: 20px;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .stat-l {
+      font-size: 9.5px;
+      color: #475569;
+      margin-top: 1px;
+    }
+
+    .sb-search {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #1e2d45;
+      color: #e2e8f0;
+      padding: 6px 9px;
+      border-radius: 5px;
+      font-size: 11.5px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .sb-search:focus {
+      border-color: #0ea5e9;
+    }
+
+    .sb-search::placeholder {
+      color: #334155;
+    }
+
+    #map {
+      flex: 1;
+    }
+
+    .leaflet-tooltip.pdv-tip {
+      background: #161b27;
+      border: 1px solid #1e2d45;
+      color: #e2e8f0;
+      padding: 9px 12px;
+      border-radius: 7px;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, .7);
+      white-space: normal;
+      max-width: 260px;
+    }
+
+    .leaflet-tooltip.pdv-tip:before {
+      display: none;
+    }
+
+    .tip-name {
+      font-weight: 700;
+      font-size: 12px;
+      color: #fff;
+      margin-bottom: 3px;
+    }
+
+    .tip-row {
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    .tip-row b {
+      color: #cbd5e1;
+    }
+
+    .tip-setor {
+      display: inline-block;
+      margin-top: 5px;
+      padding: 2px 7px;
+      border-radius: 8px;
+      font-size: 9.5px;
+      font-weight: 700;
+    }
+
+    .leaflet-popup-content-wrapper {
+      background: #161b27 !important;
+      border: 1px solid #1e2d45 !important;
+      border-radius: 8px !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .7) !important;
+      color: #e2e8f0 !important;
+    }
+
+    .leaflet-popup-tip {
+      background: #161b27 !important;
+    }
+
+    .leaflet-popup-content {
+      margin: 12px 14px !important;
+    }
+
+    .pop-h {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .pop-cnpj {
+      font-size: 9.5px;
+      color: #38bdf8;
+      font-family: monospace;
+      margin-bottom: 7px;
+    }
+
+    .pop-row {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 3px;
+      line-height: 1.4;
+    }
+
+    .pop-row b {
+      color: #cbd5e1;
+    }
+
+    .pop-warn {
+      margin-top: 7px;
+      padding: 5px 8px;
+      background: #1a1200;
+      border: 1px solid #713f12;
+      border-radius: 5px;
+      font-size: 10px;
+      color: #fbbf24;
+    }
+
+    /* ── PAINEL NÃO ENCONTRADAS ── */
+    #fail-panel {
+      display: none;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #161b27;
+      border-top: 1px solid #1e2d45;
+      z-index: 500;
+      max-height: 280px;
+      flex-direction: column;
+    }
+
+    .fail-panel-header {
+      display: flex;
+      align-items: center;
+      padding: 8px 14px;
+      border-bottom: 1px solid #1e2d45;
+      flex-shrink: 0;
+      gap: 8px;
+    }
+
+    .fail-panel-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #f87171;
+      flex: 1;
+    }
+
+    .fail-panel-sub {
+      font-size: 10px;
+      color: #475569;
+    }
+
+    .fail-panel-close {
+      background: none;
+      border: none;
+      color: #475569;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: inherit;
+    }
+
+    .fail-panel-close:hover {
+      color: #e2e8f0;
+      background: #1e2d45;
+    }
+
+    .fail-panel-list {
+      overflow-y: auto;
+      flex: 1;
+      scrollbar-width: thin;
+      scrollbar-color: #1e2d45 transparent;
+    }
+
+    .fail-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-bottom: 1px solid #1a2235;
+      font-size: 11px;
+    }
+
+    .fail-item:last-child {
+      border-bottom: none;
+    }
+
+    .fail-item-name {
+      flex: 1;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fail-item-brick {
+      font-size: 10px;
+      color: #475569;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
+    }
+
+    .fail-item-cnpj {
+      font-size: 10px;
+      color: #334155;
+      font-family: monospace;
+      flex-shrink: 0;
+    }
+
+    /* ── MODAL CARREGAR ── */
+    #modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 8000;
+      background: rgba(0, 0, 0, .65);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+    }
+
+    #modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #161b27;
+      border: 1px solid #1e2d45;
+      border-radius: 14px;
+      padding: 32px 36px;
+      width: 460px;
+      max-width: 92vw;
+      position: relative;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 4px;
+    }
+
+    .modal-sub {
+      font-size: 12px;
+      color: #475569;
+      margin-bottom: 20px;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: #475569;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .modal-close:hover {
+      color: #e2e8f0;
+      background: #1e2d45;
+    }
+
+    .modal-saved {
+      background: #0f1117;
+      border: 1px solid #1e2d45;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .modal-saved-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 8px;
+    }
+
+    .modal-saved-info {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 10px;
+    }
+
+    .modal-saved-info b {
+      color: #e2e8f0;
+    }
+
+    .modal-saved-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .modal-btn {
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 5px;
+      border: 1px solid #1e2d45;
+      background: #1a2235;
+      color: #94a3b8;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .modal-btn:hover {
+      background: #1e2d45;
+      color: #e2e8f0;
+    }
+
+    .modal-btn.primary {
+      background: #0ea5e9;
+      border-color: #0ea5e9;
+      color: #fff;
+    }
+
+    .modal-btn.primary:hover {
+      background: #0284c7;
+    }
+
+    .modal-btn.danger {
+      border-color: #7f1d1d;
+      color: #f87171;
+    }
+
+    .modal-btn.danger:hover {
+      background: #1a0a0a;
+    }
+
+    .modal-divider {
+      text-align: center;
+      font-size: 11px;
+      color: #334155;
+      margin: 14px 0;
+      position: relative;
+    }
+
+    .modal-divider::before,
+    .modal-divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 42%;
+      height: 1px;
+      background: #1e2d45;
+    }
+
+    .modal-divider::before {
+      left: 0;
+    }
+
+    .modal-divider::after {
+      right: 0;
+    }
+
+    #enricher-screen {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      background: #0f1117;
+      padding: 32px 40px;
+    }
+
+    .enr-header {
+      font-size: 15px;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 4px;
+    }
+
+    .enr-sub {
+      font-size: 12px;
+      color: #475569;
+      margin-bottom: 24px;
+    }
+
+    .enr-drop {
+      border: 1.5px dashed #1e2d45;
+      border-radius: 10px;
+      padding: 32px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .15s;
+      position: relative;
+      background: #111827;
+    }
+
+    .enr-drop:hover,
+    .enr-drop.drag {
+      border-color: #0ea5e9;
+      background: rgba(14, 165, 233, .04);
+    }
+
+    .enr-drop input[type=file] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .enr-drop-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .enr-drop-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 4px;
+    }
+
+    .enr-drop-hint {
+      font-size: 11px;
+      color: #475569;
+    }
+
+    .enr-info {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .enr-badge {
+      font-size: 11px;
+      padding: 2px 9px;
+      border-radius: 5px;
+      border: 1px solid #1e2d45;
+      color: #64748b;
+      background: #111827;
+    }
+
+    .enr-badge.blue {
+      border-color: #0ea5e9;
+      color: #38bdf8;
+      background: rgba(14, 165, 233, .08);
+    }
+
+    .enr-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .enr-stat {
+      background: #111827;
+      border: 1px solid #1e2d45;
+      border-radius: 6px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+
+    .enr-stat-n {
+      font-size: 18px;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .enr-stat-l {
+      font-size: 10px;
+      color: #475569;
+      margin-top: 2px;
+    }
+
+    .enr-prog {
+      margin-top: 16px;
+      display: none;
+    }
+
+    .enr-prog-label {
+      font-size: 11px;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+
+    .enr-prog-bg {
+      height: 5px;
+      background: #1e2d45;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .enr-prog-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #0ea5e9, #6366f1);
+      border-radius: 99px;
+      transition: width .3s;
+    }
+
+    .enr-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .enr-btn {
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 5px;
+      border: 1px solid #1e2d45;
+      background: #1a2235;
+      color: #94a3b8;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .enr-btn:hover {
+      background: #1e2d45;
+      color: #e2e8f0;
+    }
+
+    .enr-btn.primary {
+      background: #0ea5e9;
+      border-color: #0ea5e9;
+      color: #fff;
+    }
+
+    .enr-btn.primary:hover {
+      background: #0284c7;
+    }
+
+    .enr-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .enr-table-wrap {
+      margin-top: 16px;
+      border: 1px solid #1e2d45;
+      border-radius: 8px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .enr-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      table-layout: fixed;
+    }
+
+    .enr-table thead {
+      background: #111827;
+    }
+
+    .enr-table th {
+      padding: 7px 10px;
+      text-align: left;
+      font-weight: 600;
+      color: #475569;
+      font-size: 10px;
+      border-bottom: 1px solid #1e2d45;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .enr-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #1a2235;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: middle;
+    }
+
+    .enr-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .enr-pill {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 7px;
+      border-radius: 99px;
+      font-weight: 600;
+    }
+
+    .enr-ok {
+      background: rgba(52, 211, 153, .15);
+      color: #34d399;
+    }
+
+    .enr-err {
+      background: rgba(248, 113, 113, .15);
+      color: #f87171;
+    }
+
+    .enr-pend {
+      background: rgba(251, 191, 36, .12);
+      color: #fbbf24;
+    }
+
+    .enr-skip {
+      background: rgba(100, 116, 139, .15);
+      color: #64748b;
+    }
+
+    .enr-msg {
+      font-size: 11.5px;
+      color: #64748b;
+      margin-top: 10px;
+    }
+
+    .enr-msg.err {
+      color: #f87171;
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- ── UPLOAD SCREEN ── -->
-<div id="upload-screen">
-  <div class="upload-card">
-    <div class="upload-logo">Setor<span>Map</span></div>
-    <div class="upload-sub">Mapa de PDVs por setor e brick</div>
+  <!-- ── UPLOAD SCREEN ── -->
+  <div id="upload-screen">
+    <div class="upload-card">
+      <div class="upload-logo">Setor<span>Map</span></div>
+      <div class="upload-sub">Mapa de PDVs por setor e brick</div>
 
-    <div class="drop-zone" id="drop-zone">
-      <input type="file" id="file-input" accept=".xlsx,.xls">
-      <div class="drop-icon">📊</div>
-      <div class="drop-title">Arraste sua planilha aqui</div>
-      <div class="drop-hint">ou clique para selecionar · <b>.xlsx</b> / <b>.xls</b></div>
-    </div>
-
-    <div class="upload-cols">
-      <div class="upload-cols-title">Colunas esperadas na planilha</div>
-      <div class="col-tags">
-        <span class="col-tag req">Setor</span>
-        <span class="col-tag req">Brick</span>
-        <span class="col-tag req">PDV</span>
-        <span class="col-tag req">Endereço</span>
-        <span class="col-tag req">CNPJ (só dígitos)</span>
-        <span class="col-tag">Bandeira</span>
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="file-input" accept=".xlsx,.xls">
+        <div class="drop-icon">📊</div>
+        <div class="drop-title">Arraste sua planilha aqui</div>
+        <div class="drop-hint">ou clique para selecionar · <b>.xlsx</b> / <b>.xls</b></div>
       </div>
-    </div>
 
-    <div class="upload-error" id="upload-error"></div>
-    <div class="upload-loading" id="upload-loading">⏳ Processando planilha…</div>
+      <div class="upload-cols">
+        <div class="upload-cols-title">Colunas esperadas na planilha</div>
+        <div class="col-tags">
+          <span class="col-tag req">Setor</span>
+          <span class="col-tag req">Brick</span>
+          <span class="col-tag req">PDV</span>
+          <span class="col-tag">Bandeira</span>
+          <span class="col-tag">Endereço</span>
+          <span class="col-tag">CNPJ (só dígitos)</span>
+        </div>
+        <div style="font-size:10px;color:#475569;margin-top:8px;">🔵 obrigatório &nbsp;·&nbsp; ⬜ opcional (melhora a
+          precisão do mapa)</div>
+      </div>
+
+      <div class="upload-error" id="upload-error"></div>
+      <div class="upload-loading" id="upload-loading">⏳ Processando planilha…</div>
+    </div>
   </div>
-</div>
 
-<!-- ── APP ── -->
-<div id="app">
-  <header>
-    <div class="logo">Setor<span>Map</span></div>
-    <div class="hdr-sep"></div>
-    <div class="hdr-info" id="hdr-info">Carregando…</div>
-    <div class="hdr-right">
-      <button class="hbtn" id="btnSat" onclick="toggleSat()">Satélite</button>
-      <button class="hbtn" id="btnCenter" onclick="centerMap()">Centralizar</button>
-      <button class="hbtn" onclick="voltarUpload()">↩ Nova planilha</button>
+  <!-- ── APP ── -->
+  <div id="app">
+    <header>
+      <div class="logo">Setor<span>Map</span></div>
+      <div class="hdr-sep"></div>
+      <div class="hdr-info" id="hdr-info">Carregando…</div>
+      <div class="hdr-right">
+        <button class="hbtn" id="btnSat" onclick="toggleSat()">Satélite</button>
+        <button class="hbtn" id="btnCenter" onclick="centerMap()">Centralizar</button>
+        <button class="hbtn" id="btnEnr" onclick="toggleEnricher()">⚡ Enriquecedor</button>
+        <button class="hbtn" onclick="abrirModalCarregar()">📂 Carregar planilha</button>
+      </div>
+    </header>
+    <div id="status">
+      <div class="sdot"></div><span id="stxt">Iniciando geocodificação…</span>
     </div>
-  </header>
-  <div id="status"><div class="sdot"></div><span id="stxt">Iniciando geocodificação…</span></div>
-  <div id="prog-wrap"><div id="prog-fill"></div></div>
+    <div id="prog-wrap">
+      <div id="prog-fill"></div>
+    </div>
 
-  <div class="layout">
-    <div id="sidebar">
-      <div class="sb-block">
-        <div class="sb-lbl">Colorir pontos por</div>
-        <div class="mode-row">
-          <button class="mode-btn on" id="mSetor" onclick="setMode('setor')">Setor</button>
-          <button class="mode-btn" id="mBrick" onclick="setMode('brick')">Brick</button>
+    <div class="layout">
+      <div id="sidebar">
+        <div class="sb-block">
+          <div class="sb-lbl">Colorir pontos por</div>
+          <div class="mode-row">
+            <button class="mode-btn on" id="mSetor" onclick="setMode('setor')">Setor</button>
+            <button class="mode-btn" id="mBrick" onclick="setMode('brick')">Brick</button>
+          </div>
+        </div>
+
+        <div class="sb-block" id="setorBlock">
+          <div class="sb-lbl">Setores</div>
+          <div id="setorLegend"></div>
+        </div>
+
+        <div class="sb-block" id="brickBlock" style="display:none">
+          <div class="sb-lbl">Bricks</div>
+          <input class="brick-search" id="brickSearch" placeholder="Filtrar bricks…" oninput="filterBricks(this.value)">
+          <div id="brickLegend"></div>
+        </div>
+
+        <div class="sb-block">
+          <div class="sb-lbl">Buscar PDV</div>
+          <input class="sb-search" id="sbSearch" placeholder="Nome, CNPJ ou endereço…" oninput="doSearch(this.value)">
+        </div>
+
+        <div class="sb-block">
+          <div class="sb-lbl">Estatísticas</div>
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-n" id="sLoc">0</div>
+              <div class="stat-l">Localizadas</div>
+            </div>
+            <div class="stat">
+              <div class="stat-n" id="sPend">0</div>
+              <div class="stat-l">Pendentes</div>
+            </div>
+            <div class="stat" id="sFailCard" onclick="toggleFailPanel()" style="cursor:pointer"
+              title="Clique para ver a lista">
+              <div class="stat-n" id="sFail" style="color:#f87171">0</div>
+              <div class="stat-l">Não encontradas ↗</div>
+            </div>
+            <div class="stat">
+              <div class="stat-n" id="sTotal" style="color:#34d399">0</div>
+              <div class="stat-l">Total PDVs</div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <div class="sb-block" id="setorBlock">
-        <div class="sb-lbl">Setores</div>
-        <div id="setorLegend"></div>
-      </div>
-
-      <div class="sb-block" id="brickBlock" style="display:none">
-        <div class="sb-lbl">Bricks</div>
-        <input class="brick-search" id="brickSearch" placeholder="Filtrar bricks…" oninput="filterBricks(this.value)">
-        <div id="brickLegend"></div>
-      </div>
-
-      <div class="sb-block">
-        <div class="sb-lbl">Buscar PDV</div>
-        <input class="sb-search" id="sbSearch" placeholder="Nome, CNPJ ou endereço…" oninput="doSearch(this.value)">
-      </div>
-
-      <div class="sb-block">
-        <div class="sb-lbl">Estatísticas</div>
-        <div class="stats">
-          <div class="stat"><div class="stat-n" id="sLoc">0</div><div class="stat-l">Localizadas</div></div>
-          <div class="stat"><div class="stat-n" id="sPend">0</div><div class="stat-l">Pendentes</div></div>
-          <div class="stat"><div class="stat-n" id="sFail" style="color:#f87171">0</div><div class="stat-l">Não encontradas</div></div>
-          <div class="stat"><div class="stat-n" id="sTotal" style="color:#34d399">0</div><div class="stat-l">Total PDVs</div></div>
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative">
+        <div id="map" style="flex:1"></div>
+        <!-- ── PAINEL NÃO ENCONTRADAS ── -->
+        <div id="fail-panel">
+          <div class="fail-panel-header">
+            <div class="fail-panel-title">PDVs não encontrados no mapa</div>
+            <div class="fail-panel-sub" id="failPanelSub"></div>
+            <button class="fail-panel-close" onclick="toggleFailPanel()">✕</button>
+          </div>
+          <div class="fail-panel-list" id="failPanelList"></div>
         </div>
       </div>
     </div>
-    <div id="map"></div>
+
+    <!-- ── MODAL CARREGAR ── -->
+    <div id="modal-overlay" onclick="fecharModalSeOverlay(event)">
+      <div class="modal-card">
+        <button class="modal-close" onclick="fecharModal()">✕</button>
+        <div class="modal-title">📂 Carregar planilha</div>
+        <div class="modal-sub">Substitui os dados atuais do mapa</div>
+
+        <div class="modal-saved" id="modalSaved">
+          <div class="modal-saved-label">Planilha salva</div>
+          <div class="modal-saved-info" id="modalSavedInfo"></div>
+          <div class="modal-saved-btns">
+            <button class="modal-btn primary" onclick="recarregarSalvo()">↩ Recarregar salva</button>
+            <button class="modal-btn danger" onclick="limparSalvo()">🗑 Apagar dados salvos</button>
+          </div>
+        </div>
+
+        <div class="modal-divider" id="modalDivider" style="display:none">ou carregar nova</div>
+
+        <div class="drop-zone" id="modal-drop">
+          <input type="file" id="modal-file-input" accept=".xlsx,.xls">
+          <div class="drop-icon">📊</div>
+          <div class="drop-title">Arraste sua planilha aqui</div>
+          <div class="drop-hint">ou clique para selecionar · <b>.xlsx</b> / <b>.xls</b></div>
+        </div>
+        <div class="upload-cols" style="margin-top:14px">
+          <div class="upload-cols-title">Colunas esperadas</div>
+          <div class="col-tags">
+            <span class="col-tag req">Setor</span>
+            <span class="col-tag req">Brick</span>
+            <span class="col-tag req">PDV</span>
+            <span class="col-tag">Bandeira</span>
+            <span class="col-tag">Endereço</span>
+            <span class="col-tag">CNPJ (só dígitos)</span>
+          </div>
+          <div style="font-size:10px;color:#475569;margin-top:8px;">🔵 obrigatório &nbsp;·&nbsp; ⬜ opcional</div>
+        </div>
+        <div class="upload-error" id="modal-error"></div>
+        <div class="upload-loading" id="modal-loading">⏳ Processando planilha…</div>
+      </div>
+    </div>
+
+    <!-- ── ENRICHER SCREEN ── -->
+    <div id="enricher-screen">
+      <div class="enr-header">⚡ Enriquecedor de Planilha</div>
+      <div class="enr-sub">Sobe a planilha bruta (com repetições por produto) — o sistema consolida os PDVs únicos,
+        busca o endereço de cada um pelo CNPJ e gera a planilha pronta para o mapa.</div>
+      <div class="enr-drop" id="enrDrop">
+        <input type="file" id="enrFileInput" accept=".xlsx,.xls">
+        <div class="enr-drop-icon">📊</div>
+        <div class="enr-drop-title">Arraste a planilha ou clique para selecionar</div>
+        <div class="enr-drop-hint">.xlsx com colunas Setor, Brick, PDV — qualquer formato (bruto ou consolidado)</div>
+      </div>
+      <div class="enr-info" id="enrInfo" style="display:none">
+        <span class="enr-badge blue" id="enrBadgeFile"></span>
+        <span class="enr-badge" id="enrBadgeRows"></span>
+        <span class="enr-badge" id="enrBadgeUniq"></span>
+      </div>
+      <div class="enr-stats" id="enrStatRow" style="display:none">
+        <div class="enr-stat">
+          <div class="enr-stat-n" id="enrTotal">0</div>
+          <div class="enr-stat-l">PDVs únicos</div>
+        </div>
+        <div class="enr-stat">
+          <div class="enr-stat-n" id="enrOk" style="color:#34d399">0</div>
+          <div class="enr-stat-l">Encontrados</div>
+        </div>
+        <div class="enr-stat">
+          <div class="enr-stat-n" id="enrErr" style="color:#f87171">0</div>
+          <div class="enr-stat-l">Não encontrados</div>
+        </div>
+        <div class="enr-stat">
+          <div class="enr-stat-n" id="enrPend" style="color:#fbbf24">0</div>
+          <div class="enr-stat-l">Pendentes</div>
+        </div>
+      </div>
+      <div class="enr-prog" id="enrProg">
+        <div class="enr-prog-label"><span id="enrProgTxt">Buscando…</span><span id="enrProgPct">0%</span></div>
+        <div class="enr-prog-bg">
+          <div class="enr-prog-fill" id="enrProgFill"></div>
+        </div>
+      </div>
+      <div class="enr-actions" id="enrActions" style="display:none">
+        <button class="enr-btn primary" id="enrBtnStart" onclick="enrStart()">🔍 Buscar endereços</button>
+        <button class="enr-btn" id="enrBtnStop" onclick="enrStop()" style="display:none">⏸ Pausar</button>
+        <button class="enr-btn" id="enrBtnResume" onclick="enrResume()" style="display:none">▶ Retomar</button>
+        <button class="enr-btn" id="enrBtnExport" onclick="enrExport()" disabled>⬇ Baixar planilha pronta</button>
+        <button class="enr-btn" onclick="enrReset()">↩ Limpar</button>
+      </div>
+      <div class="enr-msg" id="enrMsg"></div>
+      <div class="enr-table-wrap" id="enrTableWrap">
+        <table class="enr-table">
+          <colgroup>
+            <col style="width:13%">
+            <col style="width:19%">
+            <col style="width:22%">
+            <col style="width:24%">
+            <col style="width:11%">
+            <col style="width:11%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>CNPJ</th>
+              <th>Nome</th>
+              <th>Brick</th>
+              <th>Endereço</th>
+              <th>Cidade/UF</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="enrTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
-</div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>
-// ── ESTADO GLOBAL ──
-let DATA = [];
-let SETOR_COLORS = {};
-let allBricks = [];
-let brickColorMap = {};
-let brickSetorMap = {};
-let mode = 'setor';
-let hiddenSetores = new Set();
-let hiddenBricks = new Set();
-let failed = 0;
-let markerStore = {};
-let satOn = false;
-let layerGroup, map, tileOSM, tileSat;
-let mapInitialized = false;
-let cityCenter = [-15.78, -47.93]; // fallback Brasil
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    // ── ESTADO GLOBAL ──
+    let DATA = [];
+    let SETOR_COLORS = {};
+    let allBricks = [];
+    let brickColorMap = {};
+    let brickSetorMap = {};
+    let mode = 'setor';
+    let hiddenSetores = new Set();
+    let hiddenBricks = new Set();
+    let failed = 0;
+    let failedList = [];
+    let markerStore = {};
+    let satOn = false;
+    let layerGroup, map, tileOSM, tileSat;
+    let mapInitialized = false;
+    let cityCenter = [-15.78, -47.93]; // fallback Brasil
 
-const BRICK_PALETTE = [
-  '#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#10b981','#14b8a6',
-  '#06b6d4','#0ea5e9','#3b82f6','#6366f1','#8b5cf6','#a855f7','#d946ef','#ec4899',
-  '#f43f5e','#dc2626','#ea580c','#d97706','#ca8a04','#65a30d','#16a34a','#059669',
-  '#0d9488','#0891b2','#0284c7','#2563eb','#4f46e5','#7c3aed','#9333ea','#c026d3',
-  '#db2777','#e11d48','#b91c1c','#c2410c','#b45309','#a16207','#4d7c0f','#15803d',
-  '#047857','#0f766e','#0e7490','#0369a1','#1d4ed8','#4338ca','#6d28d9','#7e22ce',
-  '#a21caf','#be185d','#be123c','#991b1b','#9a3412','#92400e','#854d0e','#3f6212',
-  '#166534','#065f46','#115e59','#155e75','#075985','#1e40af','#3730a3','#5b21b6',
-  '#fb923c','#fbbf24','#fde047','#bef264','#86efac','#6ee7b7','#5eead4','#67e8f9',
-  '#7dd3fc','#93c5fd','#a5b4fc','#c4b5fd','#d8b4fe','#f0abfc','#f9a8d4','#fda4af',
-  '#fca5a5','#fdba74','#fcd34d','#fef08a','#d9f99d','#bbf7d0','#a7f3d0','#99f6e4',
-  '#a5f3fc','#bae6fd','#bfdbfe','#c7d2fe','#ddd6fe','#e9d5ff','#f5d0fe','#fbcfe8',
-  '#fecaca','#fed7aa','#fef3c7','#fef9c3','#ecfccb','#dcfce7','#d1fae5','#ccfbf1',
-  '#cffafe','#e0f2fe','#dbeafe','#e0e7ff','#ede9fe','#f3e8ff','#fae8ff','#fce7f3',
-  '#fee2e2','#ffedd5','#fef3c7','#0c4a6e','#1e3a8a','#312e81','#4c1d95','#5b21b6',
-  '#701a75','#831843','#881337','#7f1d1d','#7c2d12','#78350f','#713f12','#365314',
-];
+    const BRICK_PALETTE = [
+      '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981', '#14b8a6',
+      '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899',
+      '#f43f5e', '#dc2626', '#ea580c', '#d97706', '#ca8a04', '#65a30d', '#16a34a', '#059669',
+      '#0d9488', '#0891b2', '#0284c7', '#2563eb', '#4f46e5', '#7c3aed', '#9333ea', '#c026d3',
+      '#db2777', '#e11d48', '#b91c1c', '#c2410c', '#b45309', '#a16207', '#4d7c0f', '#15803d',
+      '#047857', '#0f766e', '#0e7490', '#0369a1', '#1d4ed8', '#4338ca', '#6d28d9', '#7e22ce',
+      '#a21caf', '#be185d', '#be123c', '#991b1b', '#9a3412', '#92400e', '#854d0e', '#3f6212',
+      '#166534', '#065f46', '#115e59', '#155e75', '#075985', '#1e40af', '#3730a3', '#5b21b6',
+      '#fb923c', '#fbbf24', '#fde047', '#bef264', '#86efac', '#6ee7b7', '#5eead4', '#67e8f9',
+      '#7dd3fc', '#93c5fd', '#a5b4fc', '#c4b5fd', '#d8b4fe', '#f0abfc', '#f9a8d4', '#fda4af',
+      '#fca5a5', '#fdba74', '#fcd34d', '#fef08a', '#d9f99d', '#bbf7d0', '#a7f3d0', '#99f6e4',
+      '#a5f3fc', '#bae6fd', '#bfdbfe', '#c7d2fe', '#ddd6fe', '#e9d5ff', '#f5d0fe', '#fbcfe8',
+      '#fecaca', '#fed7aa', '#fef3c7', '#fef9c3', '#ecfccb', '#dcfce7', '#d1fae5', '#ccfbf1',
+      '#cffafe', '#e0f2fe', '#dbeafe', '#e0e7ff', '#ede9fe', '#f3e8ff', '#fae8ff', '#fce7f3',
+      '#fee2e2', '#ffedd5', '#fef3c7', '#0c4a6e', '#1e3a8a', '#312e81', '#4c1d95', '#5b21b6',
+      '#701a75', '#831843', '#881337', '#7f1d1d', '#7c2d12', '#78350f', '#713f12', '#365314',
+    ];
 
-// Paleta de cores para setores (gerada dinamicamente)
-const SETOR_PALETTE = [
-  '#34d399','#60a5fa','#f472b6','#a78bfa','#fb923c','#facc15',
-  '#4ade80','#38bdf8','#f87171','#c084fc','#86efac','#67e8f9',
-];
+    // Paleta de cores para setores (gerada dinamicamente)
+    const SETOR_PALETTE = [
+      '#34d399', '#60a5fa', '#f472b6', '#a78bfa', '#fb923c', '#facc15',
+      '#4ade80', '#38bdf8', '#f87171', '#c084fc', '#86efac', '#67e8f9',
+    ];
 
-// ── UPLOAD ──
-const dropZone = document.getElementById('drop-zone');
-const fileInput = document.getElementById('file-input');
-const errEl = document.getElementById('upload-error');
-const loadEl = document.getElementById('upload-loading');
+    // ── UPLOAD ──
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const errEl = document.getElementById('upload-error');
+    const loadEl = document.getElementById('upload-loading');
 
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault(); dropZone.classList.remove('drag');
-  const f = e.dataTransfer.files[0];
-  if (f) processFile(f);
-});
-fileInput.addEventListener('change', () => { if (fileInput.files[0]) processFile(fileInput.files[0]); });
+    // Drop zone da tela de upload inicial
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('drag');
+      const f = e.dataTransfer.files[0];
+      if (f) processFile(f, 'upload');
+    });
+    fileInput.addEventListener('change', () => { if (fileInput.files[0]) processFile(fileInput.files[0], 'upload'); });
 
-function showError(msg) {
-  errEl.textContent = msg; errEl.style.display = 'block'; loadEl.style.display = 'none';
-}
+    // Drop zone do modal
+    const modalDrop = document.getElementById('modal-drop');
+    const modalFileInput = document.getElementById('modal-file-input');
+    modalDrop.addEventListener('dragover', e => { e.preventDefault(); modalDrop.classList.add('drag'); });
+    modalDrop.addEventListener('dragleave', () => modalDrop.classList.remove('drag'));
+    modalDrop.addEventListener('drop', e => {
+      e.preventDefault(); modalDrop.classList.remove('drag');
+      const f = e.dataTransfer.files[0];
+      if (f) processFile(f, 'modal');
+    });
+    modalFileInput.addEventListener('change', () => { if (modalFileInput.files[0]) processFile(modalFileInput.files[0], 'modal'); });
 
-function processFile(file) {
-  errEl.style.display = 'none';
-  loadEl.style.display = 'block';
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const wb = XLSX.read(e.target.result, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-      if (!rows.length) { showError('Planilha vazia ou sem dados.'); return; }
+    function showError(msg, ctx) {
+      if (ctx === 'modal') {
+        const el = document.getElementById('modal-error');
+        el.textContent = msg; el.style.display = 'block';
+        document.getElementById('modal-loading').style.display = 'none';
+      } else {
+        errEl.textContent = msg; errEl.style.display = 'block'; loadEl.style.display = 'none';
+      }
+    }
 
-      // Detectar colunas (case-insensitive, trim)
-      const firstRow = rows[0];
-      const keys = Object.keys(firstRow);
-      function findCol(...candidates) {
-        for (const c of candidates) {
-          const found = keys.find(k => k.trim().toLowerCase() === c.toLowerCase());
-          if (found) return found;
-        }
-        return null;
+    function processFile(file, ctx) {
+      ctx = ctx || 'upload';
+      const errElCtx = ctx === 'modal' ? document.getElementById('modal-error') : errEl;
+      const loadElCtx = ctx === 'modal' ? document.getElementById('modal-loading') : loadEl;
+      errElCtx.style.display = 'none';
+      loadElCtx.style.display = 'block';
+
+      function showErr(msg) {
+        errElCtx.textContent = msg;
+        errElCtx.style.display = 'block';
+        loadElCtx.style.display = 'none';
       }
 
-      const colSetor   = findCol('Setor', 'setor', 'SETOR');
-      const colBrick   = findCol('Brick', 'brick', 'BRICK');
-      const colPDV     = findCol('PDV', 'pdv', 'Pdv');
-      const colEnd     = findCol('Endereço', 'endereco', 'Endereco', 'ENDEREÇO', 'ENDERECO', 'endereço');
-      const colCNPJ    = findCol('CNPJ (só dígitos)', 'CNPJ', 'cnpj', 'Cnpj', 'CNPJ (so digitos)', 'cnpj (só dígitos)');
-      const colBand    = findCol('Bandeira', 'bandeira', 'BANDEIRA');
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const wb = XLSX.read(e.target.result, { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+          if (!rows.length) { showErr('Planilha vazia ou sem dados.'); return; }
 
-      if (!colSetor || !colBrick || !colPDV || !colEnd || !colCNPJ) {
-        showError('Colunas não encontradas. Verifique se a planilha tem: Setor, Brick, PDV, Endereço, CNPJ (só dígitos).\n\nColunas encontradas: ' + keys.join(', '));
-        return;
-      }
+          const keys = Object.keys(rows[0]);
+          function findCol(...candidates) {
+            const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+            for (const c of candidates) {
+              const found = keys.find(k => norm(k) === norm(c));
+              if (found) return found;
+            }
+            return null;
+          }
 
-      // Parse rows
-      const parsed = [];
-      for (const row of rows) {
-        const setor   = String(row[colSetor]  || '').trim();
-        const brick   = String(row[colBrick]  || '').trim();
-        const pdvRaw  = String(row[colPDV]    || '').trim();
-        const endereco= String(row[colEnd]    || '').trim();
-        const cnpj    = String(row[colCNPJ]   || '').trim().replace(/\D/g,'');
-        const bandeira= colBand ? String(row[colBand] || '').trim() : 'N/I';
+          const colSetor = findCol('Setor', 'setor', 'SETOR');
+          const colBrick = findCol('Brick', 'brick', 'BRICK');
+          const colPDV = findCol('PDV', 'pdv', 'Pdv');
+          const colEnd = findCol('Endereço', 'endereco', 'Endereco', 'ENDEREÇO', 'ENDERECO', 'endereço');
+          const colCNPJ = findCol('CNPJ (só dígitos)', 'CNPJ (so digitos)', 'cnpj (só dígitos)');
+          const colBand = findCol('Bandeira', 'bandeira', 'BANDEIRA');
 
-        if (!setor || !brick || !cnpj) continue;
+          if (!colSetor || !colBrick || !colPDV) {
+            showErr('Colunas obrigatórias não encontradas. A planilha precisa ter: Setor, Brick, PDV.\n\nColunas encontradas: ' + keys.join(', '));
+            return;
+          }
 
-        // PDV format: "CNPJ | NOME | BAIRRO - CIDADE / UF"
-        let nome = '', bairro = '', cidade = '', uf = '';
-        if (pdvRaw.includes('|')) {
-          const parts = pdvRaw.split('|').map(s => s.trim());
-          nome = parts[1] || pdvRaw;
-          // "BAIRRO - CIDADE / UF"
-          const loc = parts[2] || '';
-          const dashIdx = loc.lastIndexOf(' - ');
-          if (dashIdx >= 0) {
-            bairro = loc.substring(0, dashIdx).trim();
-            const cidUf = loc.substring(dashIdx + 3).trim();
-            const slashIdx = cidUf.indexOf('/');
-            if (slashIdx >= 0) {
-              cidade = cidUf.substring(0, slashIdx).trim();
-              uf = cidUf.substring(slashIdx + 1).trim();
-            } else { cidade = cidUf; }
-          } else { bairro = loc; }
-        } else {
-          nome = pdvRaw || cnpj;
-        }
+          const pdvMap = {};
+          for (const row of rows) {
+            const setor = String(row[colSetor] || '').trim();
+            const brick = String(row[colBrick] || '').trim();
+            const pdvRaw = String(row[colPDV] || '').trim();
+            const bandeira = colBand ? String(row[colBand] || '').trim() : 'N/I';
+            if (!setor || !brick || !pdvRaw) continue;
 
-        parsed.push({ cnpj, nome, bandeira, endereco, bairro, cidade, uf, brick, setor, tem_endereco: !!endereco });
-      }
+            let cnpj = colCNPJ ? String(row[colCNPJ] || '').trim().replace(/\D/g, '') : '';
+            let nome = '', bairro = '', cidade = '', uf = '';
 
-      if (!parsed.length) { showError('Nenhuma linha válida encontrada. Verifique se Setor, Brick e CNPJ estão preenchidos.'); return; }
+            if (pdvRaw.includes('|')) {
+              const parts = pdvRaw.split('|').map(s => s.trim());
+              if (!cnpj) cnpj = parts[0].replace(/\D/g, '');
+              nome = parts[1] || '';
+              const loc = parts[2] || '';
+              const di = loc.lastIndexOf(' - ');
+              if (di >= 0) {
+                bairro = loc.substring(0, di).trim();
+                const cu = loc.substring(di + 3).trim();
+                const si = cu.indexOf('/');
+                if (si >= 0) { cidade = cu.substring(0, si).trim(); uf = cu.substring(si + 1).trim(); }
+                else cidade = cu;
+              } else bairro = loc;
+            } else {
+              if (!cnpj) cnpj = pdvRaw.replace(/\D/g, '').substring(0, 14);
+              nome = pdvRaw;
+            }
 
-      // Detectar cidade/centro do mapa
-      const cidades = parsed.map(p => p.cidade).filter(Boolean);
-      const cidadeMaisComum = cidades.length
-        ? cidades.sort((a,b) => cidades.filter(x=>x===b).length - cidades.filter(x=>x===a).length)[0]
-        : '';
+            if (!cnpj || cnpj.length < 7) continue;
+            const endereco = colEnd ? String(row[colEnd] || '').trim() : '';
+            const key = cnpj + '||' + brick;
+            if (pdvMap[key]) {
+              if (endereco && !pdvMap[key].endereco) pdvMap[key].endereco = endereco;
+            } else {
+              pdvMap[key] = { cnpj, nome, bandeira, endereco, bairro, cidade, uf, brick, setor };
+            }
+          }
 
-      // Detectar setores únicos e gerar cores
-      const setoresUnicos = [...new Set(parsed.map(p => p.setor))].sort();
-      const setorColors = {};
-      setoresUnicos.forEach((s, i) => {
-        const isVago = s.toUpperCase().includes('VAGO');
-        const color = isVago ? '#94a3b8' : SETOR_PALETTE[i % SETOR_PALETTE.length];
-        // Label: tenta pegar só o nome (após " - ")
-        const dashIdx = s.indexOf(' - ');
-        const label = dashIdx >= 0 ? s.substring(dashIdx + 3) : s;
-        setorColors[s] = { color, label };
+          const parsed = Object.values(pdvMap);
+          if (!parsed.length) { showErr('Nenhuma linha válida encontrada.'); return; }
+
+          const cidades = parsed.map(p => p.cidade).filter(Boolean);
+          const cidadeMaisComum = cidades.length
+            ? cidades.sort((a, b) => cidades.filter(x => x === b).length - cidades.filter(x => x === a).length)[0]
+            : '';
+
+          const setoresUnicos = [...new Set(parsed.map(p => p.setor))].sort();
+          const setorColors = {};
+          setoresUnicos.forEach((s, i) => {
+            const isVago = s.toUpperCase().includes('VAGO');
+            const color = isVago ? '#94a3b8' : SETOR_PALETTE[i % SETOR_PALETTE.length];
+            const dashIdx = s.indexOf(' - ');
+            const label = dashIdx >= 0 ? s.substring(dashIdx + 3) : s;
+            setorColors[s] = { color, label };
+          });
+
+          loadElCtx.style.display = 'none';
+          salvarEIniciar(parsed, setorColors, cidadeMaisComum, file.name);
+
+        } catch (err) { showErr('Erro ao ler o arquivo: ' + err.message); }
+      };
+      reader.onerror = () => showErr('Erro ao ler o arquivo.');
+      reader.readAsArrayBuffer(file);
+    }
+
+    function salvarEIniciar(parsed, setorColors, cidade, nomeArquivo) {
+      // Salva no localStorage para recarregar automaticamente
+      try {
+        const payload = JSON.stringify({ parsed, setorColors, cidade, nomeArquivo, savedAt: Date.now() });
+        localStorage.setItem('setormap_data', payload);
+      } catch (e) { console.warn('localStorage cheio, não foi possível salvar:', e); }
+      fecharModal();
+      iniciarApp(parsed, setorColors, cidade);
+    }
+
+    // ── INICIAR APP ──
+    async function iniciarApp(dados, setorColors, cidade) {
+      DATA = dados;
+      SETOR_COLORS = setorColors;
+      failed = 0;
+      failedList = [];
+      markerStore = {};
+      hiddenSetores = new Set();
+      hiddenBricks = new Set();
+
+      // Bricks
+      allBricks = [...new Set(DATA.map(p => p.brick))].sort();
+      brickColorMap = {};
+      allBricks.forEach((b, i) => { brickColorMap[b] = BRICK_PALETTE[i % BRICK_PALETTE.length]; });
+
+      // Setor dominante por brick
+      const brickSetorCount = {};
+      DATA.forEach(p => {
+        if (!brickSetorCount[p.brick]) brickSetorCount[p.brick] = {};
+        brickSetorCount[p.brick][p.setor] = (brickSetorCount[p.brick][p.setor] || 0) + 1;
+      });
+      brickSetorMap = {};
+      Object.keys(brickSetorCount).forEach(b => {
+        const top = Object.entries(brickSetorCount[b]).sort((a, b) => b[1] - a[1])[0][0];
+        brickSetorMap[b] = top;
       });
 
-      loadEl.style.display = 'none';
-      iniciarApp(parsed, setorColors, cidadeMaisComum);
+      // Header info
+      const nBricks = allBricks.length;
+      const nSetores = Object.keys(SETOR_COLORS).length;
+      document.getElementById('hdr-info').innerHTML =
+        (cidade || 'PDVs') + ' &nbsp;|&nbsp; <b>' + DATA.length + '</b> PDVs · <b>' + nBricks + '</b> bricks · <b>' + nSetores + '</b> setores';
+      document.getElementById('sTotal').textContent = DATA.length;
+      document.getElementById('sPend').textContent = DATA.length;
 
-    } catch(err) {
-      showError('Erro ao ler o arquivo: ' + err.message);
-    }
-  };
-  reader.onerror = () => showError('Erro ao ler o arquivo.');
-  reader.readAsArrayBuffer(file);
-}
+      // Mostrar app (esconde tela de upload se ainda visível)
+      document.getElementById('upload-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
 
-// ── INICIAR APP ──
-async function iniciarApp(dados, setorColors, cidade) {
-  DATA = dados;
-  SETOR_COLORS = setorColors;
-  failed = 0;
-  markerStore = {};
-  hiddenSetores = new Set();
-  hiddenBricks = new Set();
-
-  // Bricks
-  allBricks = [...new Set(DATA.map(p => p.brick))].sort();
-  brickColorMap = {};
-  allBricks.forEach((b, i) => { brickColorMap[b] = BRICK_PALETTE[i % BRICK_PALETTE.length]; });
-
-  // Setor dominante por brick
-  const brickSetorCount = {};
-  DATA.forEach(p => {
-    if (!brickSetorCount[p.brick]) brickSetorCount[p.brick] = {};
-    brickSetorCount[p.brick][p.setor] = (brickSetorCount[p.brick][p.setor] || 0) + 1;
-  });
-  brickSetorMap = {};
-  Object.keys(brickSetorCount).forEach(b => {
-    const top = Object.entries(brickSetorCount[b]).sort((a,b)=>b[1]-a[1])[0][0];
-    brickSetorMap[b] = top;
-  });
-
-  // Header info
-  const nBricks = allBricks.length;
-  const nSetores = Object.keys(SETOR_COLORS).length;
-  document.getElementById('hdr-info').innerHTML =
-    (cidade || 'PDVs') + ' &nbsp;|&nbsp; <b>' + DATA.length + '</b> PDVs · <b>' + nBricks + '</b> bricks · <b>' + nSetores + '</b> setores';
-  document.getElementById('sTotal').textContent = DATA.length;
-  document.getElementById('sPend').textContent = DATA.length;
-
-  // Mostrar app
-  document.getElementById('upload-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-
-  // Inicializar mapa (apenas na primeira vez)
-  if (!mapInitialized) {
-    map = L.map('map', { zoomControl: false }).setView([-15.78, -47.93], 4);
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-    tileOSM = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OSM &copy; CARTO', maxZoom: 19 });
-    tileSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; Esri', maxZoom: 19 });
-    tileOSM.addTo(map);
-    layerGroup = L.layerGroup().addTo(map);
-    mapInitialized = true;
-  } else {
-    layerGroup.clearLayers();
-  }
-
-  // Resetar status
-  document.getElementById('status').className = '';
-  document.getElementById('stxt').textContent = 'Iniciando geocodificação…';
-  document.getElementById('prog-fill').style.width = '0';
-  document.getElementById('sLoc').textContent = '0';
-  document.getElementById('sFail').textContent = '0';
-
-  buildSetorLegend();
-  await runGeo(cidade);
-}
-
-function voltarUpload() {
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('upload-screen').style.display = 'flex';
-  document.getElementById('upload-error').style.display = 'none';
-  document.getElementById('upload-loading').style.display = 'none';
-  document.getElementById('file-input').value = '';
-}
-
-// ── MAPA HELPERS ──
-function formatCNPJ(c) { return c.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'); }
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-function getColor(pdv) {
-  return mode === 'setor'
-    ? (SETOR_COLORS[pdv.setor] || { color: '#64748b' }).color
-    : (brickColorMap[pdv.brick] || '#64748b');
-}
-function isConflict(pdv) {
-  if (pdv.setor.toUpperCase().includes('VAGO')) return false;
-  const dom = brickSetorMap[pdv.brick];
-  return dom && dom !== pdv.setor;
-}
-function isHidden(pdv) {
-  if (hiddenSetores.has(pdv.setor)) return true;
-  if (mode === 'brick' && hiddenBricks.has(pdv.brick)) return true;
-  return false;
-}
-function makeIcon(color, conflict) {
-  const ring = conflict ? 'stroke="#fbbf24" stroke-width="3"' : 'stroke="rgba(0,0,0,.4)" stroke-width="1.5"';
-  const svg = '<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">'
-    + '<circle cx="8" cy="8" r="6.5" fill="' + color + '" ' + ring + '/>'
-    + (conflict ? '' : '<circle cx="8" cy="8" r="2.5" fill="rgba(255,255,255,.65)"/>')
-    + '</svg>';
-  return L.divIcon({ html: svg, className: '', iconSize: [16,16], iconAnchor: [8,8], popupAnchor: [0,-10] });
-}
-
-// ── LEGENDA SETORES (Excel-style) ──
-function getSetorCheckState() {
-  const total = Object.keys(SETOR_COLORS).length;
-  const hidden = Object.keys(SETOR_COLORS).filter(k => hiddenSetores.has(k)).length;
-  if (hidden === 0) return 'all';
-  if (hidden === total) return 'none';
-  return 'some';
-}
-function buildSetorLegend() {
-  const container = document.getElementById('setorLegend');
-  container.innerHTML = '';
-  const state = getSetorCheckState();
-  const header = document.createElement('div');
-  header.className = 'setor-header';
-  const hCb = document.createElement('div');
-  hCb.className = 'xl-cb' + (state === 'all' ? ' checked' : state === 'some' ? ' indeterminate' : '');
-  const hLbl = document.createElement('div');
-  hLbl.className = 'setor-header-lbl';
-  hLbl.textContent = state === 'all' ? 'Todos visíveis' : state === 'none' ? 'Todos ocultos' : 'Seleção parcial';
-  header.appendChild(hCb); header.appendChild(hLbl);
-  header.addEventListener('click', () => {
-    if (getSetorCheckState() === 'all') Object.keys(SETOR_COLORS).forEach(k => hiddenSetores.add(k));
-    else hiddenSetores.clear();
-    applyVisibility(); buildSetorLegend();
-  });
-  container.appendChild(header);
-  Object.entries(SETOR_COLORS).forEach(([k, v]) => {
-    const cnt = DATA.filter(p => p.setor === k).length;
-    const isOff = hiddenSetores.has(k);
-    const row = document.createElement('div');
-    row.className = 'setor-item' + (isOff ? ' off' : '');
-    const cb = document.createElement('div');
-    cb.className = 'xl-cb' + (isOff ? '' : ' checked');
-    const dot = document.createElement('div');
-    dot.className = 'setor-dot'; dot.style.background = v.color;
-    const name = document.createElement('div');
-    name.className = 'setor-name'; name.textContent = v.label;
-    const count = document.createElement('div');
-    count.className = 'setor-count'; count.textContent = cnt;
-    row.appendChild(cb); row.appendChild(dot); row.appendChild(name); row.appendChild(count);
-    row.addEventListener('click', () => toggleSetor(k));
-    container.appendChild(row);
-  });
-}
-
-// ── LEGENDA BRICKS (Excel-style) ──
-function getBrickCheckState(visibleBricks) {
-  const hidden = visibleBricks.filter(b => hiddenBricks.has(b)).length;
-  if (hidden === 0) return 'all';
-  if (hidden === visibleBricks.length) return 'none';
-  return 'some';
-}
-function buildBrickLegend(filter) {
-  filter = (filter || '').toLowerCase();
-  const container = document.getElementById('brickLegend');
-  container.innerHTML = '';
-  const filtered = allBricks.filter(b => {
-    const lbl = b.replace(/^\d+\s*-\s*[^-]+-/i, '');
-    return !filter || lbl.toLowerCase().includes(filter) || b.toLowerCase().includes(filter);
-  });
-  if (!filtered.length) {
-    container.innerHTML = '<div style="font-size:10px;color:#475569;padding:8px 0">Nenhum brick encontrado</div>';
-    return;
-  }
-  const state = getBrickCheckState(filtered);
-  const header = document.createElement('div');
-  header.className = 'brick-header';
-  const hCb = document.createElement('div');
-  hCb.className = 'xl-cb' + (state === 'all' ? ' checked' : state === 'some' ? ' indeterminate' : '');
-  const hLbl = document.createElement('div');
-  hLbl.className = 'brick-header-lbl';
-  hLbl.textContent = state === 'all' ? 'Todos visíveis' : state === 'none' ? 'Todos ocultos' : 'Seleção parcial';
-  header.appendChild(hCb); header.appendChild(hLbl);
-  header.addEventListener('click', () => {
-    if (getBrickCheckState(filtered) === 'all') filtered.forEach(b => hiddenBricks.add(b));
-    else filtered.forEach(b => hiddenBricks.delete(b));
-    applyVisibility(); buildBrickLegend(document.getElementById('brickSearch').value);
-  });
-  container.appendChild(header);
-  const list = document.createElement('div');
-  list.className = 'brick-list';
-  filtered.forEach(b => {
-    const cnt = DATA.filter(p => p.brick === b).length;
-    const isOff = hiddenBricks.has(b);
-    // Label: remove prefixo tipo "0008981 - CIDADE-"
-    const lbl = b.replace(/^(\d+)\s*-\s*[^-]+-/i, '$1 · ') || b;
-    const row = document.createElement('div'); row.className = 'brick-item';
-    const cb = document.createElement('div'); cb.className = 'xl-cb' + (isOff ? '' : ' checked');
-    cb.style.cssText = 'width:10px;height:10px';
-    const dot = document.createElement('div'); dot.className = 'brick-dot' + (isOff ? ' off' : '');
-    dot.style.background = brickColorMap[b];
-    const name = document.createElement('div'); name.className = 'brick-name' + (isOff ? ' off' : '');
-    name.textContent = lbl;
-    const count = document.createElement('div'); count.className = 'brick-count'; count.textContent = cnt;
-    row.appendChild(cb); row.appendChild(dot); row.appendChild(name); row.appendChild(count);
-    row.addEventListener('click', () => toggleBrick(b));
-    list.appendChild(row);
-  });
-  container.appendChild(list);
-}
-
-function filterBricks(q) { buildBrickLegend(q); }
-
-function setMode(m) {
-  mode = m;
-  document.getElementById('mSetor').classList.toggle('on', m === 'setor');
-  document.getElementById('mBrick').classList.toggle('on', m === 'brick');
-  document.getElementById('setorBlock').style.display = m === 'setor' ? '' : 'none';
-  document.getElementById('brickBlock').style.display = m === 'brick' ? '' : 'none';
-  if (m === 'brick') buildBrickLegend();
-  Object.values(markerStore).forEach(item => item.marker.setIcon(makeIcon(getColor(item.pdv), isConflict(item.pdv))));
-  applyVisibility();
-}
-
-function applyVisibility() {
-  Object.values(markerStore).forEach(item => {
-    if (isHidden(item.pdv)) layerGroup.removeLayer(item.marker);
-    else layerGroup.addLayer(item.marker);
-  });
-}
-
-function toggleSetor(s) {
-  if (hiddenSetores.has(s)) hiddenSetores.delete(s); else hiddenSetores.add(s);
-  applyVisibility(); buildSetorLegend();
-}
-function toggleBrick(b) {
-  if (hiddenBricks.has(b)) hiddenBricks.delete(b); else hiddenBricks.add(b);
-  applyVisibility(); buildBrickLegend(document.getElementById('brickSearch').value);
-}
-function toggleSat() {
-  satOn = !satOn;
-  document.getElementById('btnSat').classList.toggle('on', satOn);
-  if (satOn) { map.removeLayer(tileOSM); tileSat.addTo(map); }
-  else { map.removeLayer(tileSat); tileOSM.addTo(map); }
-}
-function centerMap() {
-  const markers = Object.values(markerStore);
-  if (markers.length) map.fitBounds(L.latLngBounds(markers.map(m => m.marker.getLatLng())), { padding: [40,40] });
-}
-function doSearch(q) {
-  if (!q) return;
-  const lq = q.toLowerCase();
-  const matches = Object.values(markerStore).filter(item =>
-    item.pdv.nome.toLowerCase().includes(lq) ||
-    item.pdv.cnpj.includes(lq) ||
-    (item.pdv.endereco || '').toLowerCase().includes(lq)
-  );
-  if (matches.length === 1) { map.setView(matches[0].marker.getLatLng(), 17); matches[0].marker.openPopup(); }
-  else if (matches.length > 1) map.fitBounds(L.latLngBounds(matches.map(m => m.marker.getLatLng())), { padding: [40,40] });
-}
-
-function buildTooltipHTML(pdv) {
-  const si = SETOR_COLORS[pdv.setor] || { color: '#64748b', label: pdv.setor };
-  const brickShort = pdv.brick.replace(/^\d+\s*-\s*[^-]+-/i, '');
-  const brickCode = (pdv.brick.match(/^(\d+)/) || [])[1] || '';
-  const endStr = pdv.endereco
-    ? pdv.endereco + (pdv.bairro ? ' — ' + pdv.bairro : '')
-    : '<span style="color:#64748b;font-style:italic">Sem endereço cadastrado</span>';
-  return '<div class="tip-name">🏥 ' + pdv.nome + '</div>'
-    + '<div class="tip-row"><b>Endereço:</b> ' + endStr + '</div>'
-    + '<div class="tip-row"><b>Brick:</b> ' + (brickCode ? brickCode + ' · ' : '') + brickShort + '</div>'
-    + '<span class="tip-setor" style="background:' + si.color + '22;color:' + si.color + ';border:1px solid ' + si.color + '55">' + si.label + '</span>';
-}
-function buildPopupHTML(pdv) {
-  const si = SETOR_COLORS[pdv.setor] || { color: '#64748b', label: pdv.setor };
-  const di = SETOR_COLORS[brickSetorMap[pdv.brick]] || { color: '#64748b', label: '' };
-  const brickShort = pdv.brick.replace(/^\d+\s*-\s*[^-]+-/i, '');
-  const conf = isConflict(pdv);
-  const warn = conf
-    ? '<div class="pop-warn" style="background:#451a03;border-color:#92400e;color:#fbbf24">⚠ Brick pertence ao setor <b style="color:' + di.color + '">' + di.label + '</b></div>'
-    : (pdv.setor.toUpperCase().includes('VAGO') ? '<div class="pop-warn">📋 Sem setor responsável (VAGO)</div>' : '');
-  return '<div class="pop-h">🏥 ' + pdv.nome + '</div>'
-    + '<div class="pop-cnpj">' + formatCNPJ(pdv.cnpj) + '</div>'
-    + '<div class="pop-row"><b>Endereço:</b> ' + (pdv.endereco || '—') + '</div>'
-    + '<div class="pop-row"><b>Bairro:</b> ' + (pdv.bairro || '—') + '</div>'
-    + '<div class="pop-row"><b>Cidade:</b> ' + (pdv.cidade || '—') + (pdv.uf ? ' / ' + pdv.uf : '') + '</div>'
-    + '<div class="pop-row"><b>Bandeira:</b> ' + (pdv.bandeira || '—') + '</div>'
-    + '<div class="pop-row"><b>Brick:</b> ' + brickShort + '</div>'
-    + '<div class="pop-row"><b>Setor:</b> <span style="color:' + si.color + ';font-weight:600">' + si.label + '</span></div>'
-    + warn;
-}
-
-function addMarker(pdv, lat, lng) {
-  const marker = L.marker([lat,lng], { icon: makeIcon(getColor(pdv), isConflict(pdv)) });
-  marker.bindTooltip(buildTooltipHTML(pdv), { className: 'pdv-tip', direction: 'top', offset: [0,-8], sticky: false });
-  marker.bindPopup(buildPopupHTML(pdv), { maxWidth: 290 });
-  markerStore[pdv.cnpj] = { marker, pdv };
-  if (!isHidden(pdv)) layerGroup.addLayer(marker);
-}
-
-function updateStats(done, total) {
-  const pct = Math.round(done / total * 100);
-  document.getElementById('sLoc').textContent = done - failed;
-  document.getElementById('sPend').textContent = total - done;
-  document.getElementById('sFail').textContent = failed;
-  document.getElementById('prog-fill').style.width = pct + '%';
-  document.getElementById('stxt').textContent = 'Geocodificando… ' + done + '/' + total + ' — ' + (done - failed) + ' encontradas';
-  if (done === total) {
-    document.getElementById('status').className = 'done';
-    document.getElementById('stxt').textContent = '✓ ' + (done - failed) + ' PDVs localizados · ' + failed + ' não encontrados';
-    // Centralizar no mapa após geocodificar todos
-    const markers = Object.values(markerStore);
-    if (markers.length) {
-      map.fitBounds(L.latLngBounds(markers.map(m => m.marker.getLatLng())), { padding: [40,40] });
-    }
-  }
-}
-
-const geoCache = {};
-
-async function geocodePDV(pdv) {
-  const queries = [];
-  const cidadeStr = (pdv.cidade || '') + (pdv.uf ? ', ' + pdv.uf : '') + ', Brasil';
-
-  if (pdv.endereco) {
-    const m = pdv.endereco.match(/^([^,]+)\s*,\s*(\d+)/);
-    if (m) {
-      const rua = m[1].trim(), num = m[2];
-      queries.push(rua + ', ' + num + ', ' + (pdv.bairro || '') + ', ' + cidadeStr);
-      queries.push(rua + ', ' + num + ', ' + cidadeStr);
-    }
-    queries.push(pdv.endereco + ', ' + cidadeStr);
-    const ruaSomente = pdv.endereco.split(',')[0].trim();
-    if (ruaSomente && pdv.bairro) queries.push(ruaSomente + ', ' + pdv.bairro + ', ' + cidadeStr);
-  }
-  if (pdv.bairro) queries.push(pdv.bairro + ', ' + cidadeStr);
-
-  for (const q of queries) {
-    if (geoCache[q] !== undefined) { if (geoCache[q]) return geoCache[q]; continue; }
-    try {
-      const r = await fetch(
-        'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q) + '&limit=1&countrycodes=br',
-        { headers: { 'Accept-Language': 'pt-BR' } }
-      );
-      const d = await r.json();
-      if (d && d[0]) {
-        const pos = { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) };
-        geoCache[q] = pos; return pos;
+      // Inicializar mapa (apenas na primeira vez)
+      if (!mapInitialized) {
+        map = L.map('map', { zoomControl: false }).setView([-15.78, -47.93], 4);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        tileOSM = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OSM &copy; CARTO', maxZoom: 19 });
+        tileSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; Esri', maxZoom: 19 });
+        tileOSM.addTo(map);
+        layerGroup = L.layerGroup().addTo(map);
+        mapInitialized = true;
+      } else {
+        layerGroup.clearLayers();
       }
-      geoCache[q] = null;
-    } catch(e) { geoCache[q] = null; }
-    await sleep(1100);
-  }
-  return null;
-}
 
-async function runGeo(cidade) {
-  // Geocodificar apenas PDVs com endereço primeiro para centralizar mapa cedo
-  const total = DATA.length;
-  let done = 0;
+      // Resetar status
+      document.getElementById('status').className = '';
+      document.getElementById('stxt').textContent = 'Iniciando geocodificação…';
+      document.getElementById('prog-fill').style.width = '0';
+      document.getElementById('sLoc').textContent = '0';
+      document.getElementById('sFail').textContent = '0';
 
-  for (const pdv of DATA) {
-    const pos = await geocodePDV(pdv);
-    await sleep(1100);
-    if (pos) addMarker(pdv, pos.lat, pos.lng);
-    else failed++;
-    done++;
-    updateStats(done, total);
-  }
-}
-</script>
+      buildSetorLegend();
+      await runGeo(cidade);
+    }
+
+    // ── MODAL CARREGAR ──
+    function abrirModalCarregar() {
+      const saved = getSaved();
+      const savedEl = document.getElementById('modalSaved');
+      const divider = document.getElementById('modalDivider');
+      const errEl2 = document.getElementById('modal-error');
+      const loadEl2 = document.getElementById('modal-loading');
+      errEl2.style.display = 'none';
+      loadEl2.style.display = 'none';
+      document.getElementById('modal-file-input').value = '';
+
+      if (saved) {
+        const d = new Date(saved.savedAt);
+        const dtStr = d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('modalSavedInfo').innerHTML =
+          '<b>' + (saved.nomeArquivo || 'planilha') + '</b><br>' +
+          saved.parsed.length + ' PDVs · ' + Object.keys(saved.setorColors).length + ' setores · salvo em ' + dtStr;
+        savedEl.style.display = 'block';
+        divider.style.display = 'block';
+      } else {
+        savedEl.style.display = 'none';
+        divider.style.display = 'none';
+      }
+      document.getElementById('modal-overlay').classList.add('open');
+    }
+
+    function fecharModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
+
+    function fecharModalSeOverlay(e) {
+      if (e.target === document.getElementById('modal-overlay')) fecharModal();
+    }
+
+    function getSaved() {
+      try {
+        const raw = localStorage.getItem('setormap_data');
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    }
+
+    function recarregarSalvo() {
+      const saved = getSaved();
+      if (!saved) return;
+      fecharModal();
+      iniciarApp(saved.parsed, saved.setorColors, saved.cidade);
+    }
+
+    function limparSalvo() {
+      if (!confirm('Apagar dados salvos? Será necessário carregar uma nova planilha.')) return;
+      localStorage.removeItem('setormap_data');
+      fecharModal();
+      // Volta para tela de upload
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('upload-screen').style.display = 'flex';
+      document.getElementById('upload-error').style.display = 'none';
+      document.getElementById('upload-loading').style.display = 'none';
+    }
+
+    // ── STARTUP: carrega automaticamente se tiver dados salvos ──
+    (function startup() {
+      const saved = getSaved();
+      if (saved && saved.parsed && saved.parsed.length) {
+        // Tem dados salvos → abre mapa direto sem tela de upload
+        document.getElementById('upload-screen').style.display = 'none';
+        iniciarApp(saved.parsed, saved.setorColors, saved.cidade);
+      }
+      // Se não tiver, a tela de upload já está visível por padrão
+    })();
+
+    // ── MAPA HELPERS ──
+    function formatCNPJ(c) { return c.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5'); }
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+    function getColor(pdv) {
+      return mode === 'setor'
+        ? (SETOR_COLORS[pdv.setor] || { color: '#64748b' }).color
+        : (brickColorMap[pdv.brick] || '#64748b');
+    }
+    function isConflict(pdv) {
+      if (pdv.setor.toUpperCase().includes('VAGO')) return false;
+      const dom = brickSetorMap[pdv.brick];
+      return dom && dom !== pdv.setor;
+    }
+    function isHidden(pdv) {
+      if (hiddenSetores.has(pdv.setor)) return true;
+      if (mode === 'brick' && hiddenBricks.has(pdv.brick)) return true;
+      return false;
+    }
+    function makeIcon(color, conflict) {
+      const ring = conflict ? 'stroke="#fbbf24" stroke-width="3"' : 'stroke="rgba(0,0,0,.4)" stroke-width="1.5"';
+      const svg = '<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">'
+        + '<circle cx="8" cy="8" r="6.5" fill="' + color + '" ' + ring + '/>'
+        + (conflict ? '' : '<circle cx="8" cy="8" r="2.5" fill="rgba(255,255,255,.65)"/>')
+        + '</svg>';
+      return L.divIcon({ html: svg, className: '', iconSize: [16, 16], iconAnchor: [8, 8], popupAnchor: [0, -10] });
+    }
+
+    // ── LEGENDA SETORES (Excel-style) ──
+    function getSetorCheckState() {
+      const total = Object.keys(SETOR_COLORS).length;
+      const hidden = Object.keys(SETOR_COLORS).filter(k => hiddenSetores.has(k)).length;
+      if (hidden === 0) return 'all';
+      if (hidden === total) return 'none';
+      return 'some';
+    }
+    function buildSetorLegend() {
+      const container = document.getElementById('setorLegend');
+      container.innerHTML = '';
+      const state = getSetorCheckState();
+      const header = document.createElement('div');
+      header.className = 'setor-header';
+      const hCb = document.createElement('div');
+      hCb.className = 'xl-cb' + (state === 'all' ? ' checked' : state === 'some' ? ' indeterminate' : '');
+      const hLbl = document.createElement('div');
+      hLbl.className = 'setor-header-lbl';
+      hLbl.textContent = state === 'all' ? 'Todos visíveis' : state === 'none' ? 'Todos ocultos' : 'Seleção parcial';
+      header.appendChild(hCb); header.appendChild(hLbl);
+      header.addEventListener('click', () => {
+        if (getSetorCheckState() === 'all') Object.keys(SETOR_COLORS).forEach(k => hiddenSetores.add(k));
+        else hiddenSetores.clear();
+        applyVisibility(); buildSetorLegend();
+      });
+      container.appendChild(header);
+      Object.entries(SETOR_COLORS).forEach(([k, v]) => {
+        const cnt = DATA.filter(p => p.setor === k).length;
+        const isOff = hiddenSetores.has(k);
+        const row = document.createElement('div');
+        row.className = 'setor-item' + (isOff ? ' off' : '');
+        const cb = document.createElement('div');
+        cb.className = 'xl-cb' + (isOff ? '' : ' checked');
+        const dot = document.createElement('div');
+        dot.className = 'setor-dot'; dot.style.background = v.color;
+        const name = document.createElement('div');
+        name.className = 'setor-name'; name.textContent = v.label;
+        const count = document.createElement('div');
+        count.className = 'setor-count'; count.textContent = cnt;
+        row.appendChild(cb); row.appendChild(dot); row.appendChild(name); row.appendChild(count);
+        row.addEventListener('click', () => toggleSetor(k));
+        container.appendChild(row);
+      });
+    }
+
+    // ── LEGENDA BRICKS (Excel-style) ──
+    function getBrickCheckState(visibleBricks) {
+      const hidden = visibleBricks.filter(b => hiddenBricks.has(b)).length;
+      if (hidden === 0) return 'all';
+      if (hidden === visibleBricks.length) return 'none';
+      return 'some';
+    }
+    function buildBrickLegend(filter) {
+      filter = (filter || '').toLowerCase();
+      const container = document.getElementById('brickLegend');
+      container.innerHTML = '';
+      const filtered = allBricks.filter(b => {
+        const lbl = b.replace(/^\d+\s*-\s*[^-]+-/i, '');
+        return !filter || lbl.toLowerCase().includes(filter) || b.toLowerCase().includes(filter);
+      });
+      if (!filtered.length) {
+        container.innerHTML = '<div style="font-size:10px;color:#475569;padding:8px 0">Nenhum brick encontrado</div>';
+        return;
+      }
+      const state = getBrickCheckState(filtered);
+      const header = document.createElement('div');
+      header.className = 'brick-header';
+      const hCb = document.createElement('div');
+      hCb.className = 'xl-cb' + (state === 'all' ? ' checked' : state === 'some' ? ' indeterminate' : '');
+      const hLbl = document.createElement('div');
+      hLbl.className = 'brick-header-lbl';
+      hLbl.textContent = state === 'all' ? 'Todos visíveis' : state === 'none' ? 'Todos ocultos' : 'Seleção parcial';
+      header.appendChild(hCb); header.appendChild(hLbl);
+      header.addEventListener('click', () => {
+        if (getBrickCheckState(filtered) === 'all') filtered.forEach(b => hiddenBricks.add(b));
+        else filtered.forEach(b => hiddenBricks.delete(b));
+        applyVisibility(); buildBrickLegend(document.getElementById('brickSearch').value);
+      });
+      container.appendChild(header);
+      const list = document.createElement('div');
+      list.className = 'brick-list';
+      filtered.forEach(b => {
+        const cnt = DATA.filter(p => p.brick === b).length;
+        const isOff = hiddenBricks.has(b);
+        // Label: remove prefixo tipo "0008981 - CIDADE-"
+        const lbl = b.replace(/^(\d+)\s*-\s*[^-]+-/i, '$1 · ') || b;
+        const row = document.createElement('div'); row.className = 'brick-item';
+        const cb = document.createElement('div'); cb.className = 'xl-cb' + (isOff ? '' : ' checked');
+        cb.style.cssText = 'width:10px;height:10px';
+        const dot = document.createElement('div'); dot.className = 'brick-dot' + (isOff ? ' off' : '');
+        dot.style.background = brickColorMap[b];
+        const name = document.createElement('div'); name.className = 'brick-name' + (isOff ? ' off' : '');
+        name.textContent = lbl;
+        const count = document.createElement('div'); count.className = 'brick-count'; count.textContent = cnt;
+        row.appendChild(cb); row.appendChild(dot); row.appendChild(name); row.appendChild(count);
+        row.addEventListener('click', () => toggleBrick(b));
+        list.appendChild(row);
+      });
+      container.appendChild(list);
+    }
+
+    function filterBricks(q) { buildBrickLegend(q); }
+
+    function setMode(m) {
+      mode = m;
+      document.getElementById('mSetor').classList.toggle('on', m === 'setor');
+      document.getElementById('mBrick').classList.toggle('on', m === 'brick');
+      document.getElementById('setorBlock').style.display = m === 'setor' ? '' : 'none';
+      document.getElementById('brickBlock').style.display = m === 'brick' ? '' : 'none';
+      if (m === 'brick') buildBrickLegend();
+      Object.values(markerStore).forEach(item => item.marker.setIcon(makeIcon(getColor(item.pdv), isConflict(item.pdv))));
+      applyVisibility();
+    }
+
+    function applyVisibility() {
+      Object.values(markerStore).forEach(item => {
+        if (isHidden(item.pdv)) layerGroup.removeLayer(item.marker);
+        else layerGroup.addLayer(item.marker);
+      });
+    }
+
+    function toggleSetor(s) {
+      if (hiddenSetores.has(s)) hiddenSetores.delete(s); else hiddenSetores.add(s);
+      applyVisibility(); buildSetorLegend();
+    }
+    function toggleBrick(b) {
+      if (hiddenBricks.has(b)) hiddenBricks.delete(b); else hiddenBricks.add(b);
+      applyVisibility(); buildBrickLegend(document.getElementById('brickSearch').value);
+    }
+    function toggleSat() {
+      satOn = !satOn;
+      document.getElementById('btnSat').classList.toggle('on', satOn);
+      if (satOn) { map.removeLayer(tileOSM); tileSat.addTo(map); }
+      else { map.removeLayer(tileSat); tileOSM.addTo(map); }
+    }
+    function centerMap() {
+      const markers = Object.values(markerStore);
+      if (markers.length) map.fitBounds(L.latLngBounds(markers.map(m => m.marker.getLatLng())), { padding: [40, 40] });
+    }
+    function doSearch(q) {
+      if (!q) return;
+      const lq = q.toLowerCase();
+      const matches = Object.values(markerStore).filter(item =>
+        item.pdv.nome.toLowerCase().includes(lq) ||
+        item.pdv.cnpj.includes(lq) ||
+        (item.pdv.endereco || '').toLowerCase().includes(lq)
+      );
+      if (matches.length === 1) { map.setView(matches[0].marker.getLatLng(), 17); matches[0].marker.openPopup(); }
+      else if (matches.length > 1) map.fitBounds(L.latLngBounds(matches.map(m => m.marker.getLatLng())), { padding: [40, 40] });
+    }
+
+    function buildTooltipHTML(pdv) {
+      const si = SETOR_COLORS[pdv.setor] || { color: '#64748b', label: pdv.setor };
+      const brickShort = pdv.brick.replace(/^\d+\s*-\s*[^-]+-/i, '');
+      const brickCode = (pdv.brick.match(/^(\d+)/) || [])[1] || '';
+      let endStr;
+      if (pdv.endereco) {
+        endStr = pdv.endereco + (pdv.bairro ? ' — ' + pdv.bairro : '');
+      } else if (pdv.bairro) {
+        endStr = '<span style="color:#94a3b8;font-style:italic">Bairro: ' + pdv.bairro + (pdv.cidade ? ' · ' + pdv.cidade : '') + '</span>';
+      } else {
+        endStr = '<span style="color:#64748b;font-style:italic">Sem endereço cadastrado</span>';
+      }
+      return '<div class="tip-name">🏥 ' + pdv.nome + '</div>'
+        + '<div class="tip-row"><b>Endereço:</b> ' + endStr + '</div>'
+        + '<div class="tip-row"><b>Brick:</b> ' + (brickCode ? brickCode + ' · ' : '') + brickShort + '</div>'
+        + '<span class="tip-setor" style="background:' + si.color + '22;color:' + si.color + ';border:1px solid ' + si.color + '55">' + si.label + '</span>';
+    }
+    function buildPopupHTML(pdv) {
+      const si = SETOR_COLORS[pdv.setor] || { color: '#64748b', label: pdv.setor };
+      const di = SETOR_COLORS[brickSetorMap[pdv.brick]] || { color: '#64748b', label: '' };
+      const brickShort = pdv.brick.replace(/^\d+\s*-\s*[^-]+-/i, '');
+      const conf = isConflict(pdv);
+      const warn = conf
+        ? '<div class="pop-warn" style="background:#451a03;border-color:#92400e;color:#fbbf24">⚠ Brick pertence ao setor <b style="color:' + di.color + '">' + di.label + '</b></div>'
+        : (pdv.setor.toUpperCase().includes('VAGO') ? '<div class="pop-warn">📋 Sem setor responsável (VAGO)</div>' : '');
+      return '<div class="pop-h">🏥 ' + pdv.nome + '</div>'
+        + '<div class="pop-cnpj">' + formatCNPJ(pdv.cnpj) + '</div>'
+        + '<div class="pop-row"><b>Endereço:</b> ' + (pdv.endereco || '—') + '</div>'
+        + '<div class="pop-row"><b>Bairro:</b> ' + (pdv.bairro || '—') + '</div>'
+        + '<div class="pop-row"><b>Cidade:</b> ' + (pdv.cidade || '—') + (pdv.uf ? ' / ' + pdv.uf : '') + '</div>'
+        + '<div class="pop-row"><b>Bandeira:</b> ' + (pdv.bandeira || '—') + '</div>'
+        + '<div class="pop-row"><b>Brick:</b> ' + brickShort + '</div>'
+        + '<div class="pop-row"><b>Setor:</b> <span style="color:' + si.color + ';font-weight:600">' + si.label + '</span></div>'
+        + warn;
+    }
+
+    function addMarker(pdv, lat, lng) {
+      const marker = L.marker([lat, lng], { icon: makeIcon(getColor(pdv), isConflict(pdv)) });
+      marker.bindTooltip(buildTooltipHTML(pdv), { className: 'pdv-tip', direction: 'top', offset: [0, -8], sticky: false });
+      marker.bindPopup(buildPopupHTML(pdv), { maxWidth: 290 });
+      markerStore[pdv.cnpj] = { marker, pdv };
+      if (!isHidden(pdv)) layerGroup.addLayer(marker);
+    }
+
+    function updateStats(done, total) {
+      const pct = Math.round(done / total * 100);
+      document.getElementById('sLoc').textContent = done - failed;
+      document.getElementById('sPend').textContent = total - done;
+      document.getElementById('sFail').textContent = failed;
+      // Destaca o card se houver falhas
+      document.getElementById('sFailCard').style.borderColor = failed > 0 ? '#7f1d1d' : '';
+      document.getElementById('prog-fill').style.width = pct + '%';
+      document.getElementById('stxt').textContent = 'Geocodificando… ' + done + '/' + total + ' — ' + (done - failed) + ' encontradas';
+      if (done === total) {
+        document.getElementById('status').className = 'done';
+        document.getElementById('stxt').textContent = '✓ ' + (done - failed) + ' PDVs localizados · ' + failed + ' não encontrados';
+        // Centralizar no mapa após geocodificar todos
+        const markers = Object.values(markerStore);
+        if (markers.length) {
+          map.fitBounds(L.latLngBounds(markers.map(m => m.marker.getLatLng())), { padding: [40, 40] });
+        }
+      }
+    }
+
+    const geoCache = {};
+
+    async function geocodePDV(pdv) {
+      const queries = [];
+      const cidadeStr = (pdv.cidade || 'Porto Alegre') + (pdv.uf ? ', ' + pdv.uf : ', RS') + ', Brasil';
+
+      // 1) Endereço completo (planilha enriquecida)
+      if (pdv.endereco) {
+        const m = pdv.endereco.match(/^([^,]+)\s*,\s*(\d+)/);
+        if (m) {
+          const rua = m[1].trim(), num = m[2];
+          queries.push(rua + ', ' + num + ', ' + (pdv.bairro || '') + ', ' + cidadeStr);
+          queries.push(rua + ', ' + num + ', ' + cidadeStr);
+        }
+        queries.push(pdv.endereco + ', ' + cidadeStr);
+        const ruaSomente = pdv.endereco.split(',')[0].trim();
+        if (ruaSomente && pdv.bairro) queries.push(ruaSomente + ', ' + pdv.bairro + ', ' + cidadeStr);
+      }
+
+      // 2) Busca pelo NOME da farmácia + bairro (funciona muito bem no Nominatim)
+      //    Ex: "PANVEL FARMACIAS MOINHOS DE VENTO Porto Alegre, RS, Brasil"
+      if (pdv.nome) {
+        // Nome limpo: remove termos genéricos
+        const nomeClean = pdv.nome
+          .replace(/\s*-\s*(FARMACIA|FARMACIAS|DROGARIA|DROGARIAS)\s*/i, ' ')
+          .replace(/\bFARMACIA(S)?\b/i, '')
+          .replace(/\bDROGARIA(S)?\b/i, '')
+          .trim();
+        if (nomeClean && pdv.bairro)
+          queries.push(nomeClean + ' ' + pdv.bairro + ', ' + cidadeStr);
+        if (nomeClean)
+          queries.push(nomeClean + ', ' + cidadeStr);
+        // Também tenta com o nome completo sem modificação
+        if (pdv.bairro)
+          queries.push(pdv.nome + ' ' + pdv.bairro + ', ' + cidadeStr);
+      }
+
+      // 3) Fallback: extrai logradouro do nome do brick
+      //    Ex: "0008971 - PORTO ALEGRE-24 DE OUTUBRO-722" → "24 DE OUTUBRO, 722"
+      if (!pdv.endereco && pdv.brick) {
+        const brickBody = pdv.brick
+          .replace(/^\d+\s*-\s*/, '')
+          .replace(/^[A-Z\s]+-/, '');
+        const numMatch = brickBody.match(/^(.+?)-(\d+)\s*$/);
+        if (numMatch) {
+          queries.push(numMatch[1].trim() + ', ' + numMatch[2] + ', ' + cidadeStr);
+          queries.push(numMatch[1].trim() + ', ' + cidadeStr);
+        } else {
+          queries.push(brickBody.trim() + ', ' + cidadeStr);
+        }
+      }
+
+      // 4) Último recurso: só bairro + cidade
+      if (pdv.bairro) queries.push(pdv.bairro + ', ' + cidadeStr);
+
+      for (const q of queries) {
+        if (geoCache[q] !== undefined) { if (geoCache[q]) return geoCache[q]; continue; }
+        try {
+          const r = await fetch(
+            'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q) + '&limit=1&countrycodes=br',
+            { headers: { 'Accept-Language': 'pt-BR' } }
+          );
+          const d = await r.json();
+          if (d && d[0]) {
+            const pos = { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) };
+            geoCache[q] = pos; return pos;
+          }
+          geoCache[q] = null;
+        } catch (e) { geoCache[q] = null; }
+        await sleep(1100);
+      }
+      return null;
+    }
+
+    async function fetchEnderecoViaCNPJ(cnpj) {
+      if (!cnpj || cnpj.length !== 14) return null;
+      // Tenta BrasilAPI primeiro
+      try {
+        const r = await fetch('https://brasilapi.com.br/api/cnpj/v1/' + cnpj);
+        if (r.ok) {
+          const d = await r.json();
+          const logr = [(d.descricao_tipo_de_logradouro || ''), (d.logradouro || '')].filter(Boolean).join(' ');
+          const num = d.numero || 'S/N';
+          if (logr) return {
+            endereco: (logr + ', ' + num).trim(),
+            bairro: d.bairro || '',
+            cidade: d.municipio || '',
+            uf: d.uf || ''
+          };
+        }
+      } catch { /* fallback */ }
+      // Fallback: cnpj.ws
+      try {
+        const r = await fetch('https://publica.cnpj.ws/cnpj/' + cnpj);
+        if (!r.ok) return null;
+        const d = await r.json();
+        const end = d.estabelecimento;
+        if (!end) return null;
+        const logr = [end.tipo_logradouro, end.logradouro].filter(Boolean).join(' ');
+        const num = end.numero || 'S/N';
+        return {
+          endereco: (logr + (num ? ', ' + num : '')).trim(),
+          bairro: end.bairro || '',
+          cidade: end.cidade ? end.cidade.nome : '',
+          uf: end.estado ? end.estado.sigla : ''
+        };
+      } catch { return null; }
+    }
+
+    async function runGeo(cidade) {
+      const total = DATA.length;
+      let done = 0;
+      for (const pdv of DATA) {
+        // Se não tem endereço, busca via CNPJ antes de geocodificar
+        if (!pdv.endereco && pdv.cnpj && pdv.cnpj.length === 14) {
+          const info = await fetchEnderecoViaCNPJ(pdv.cnpj);
+          if (info && info.endereco) {
+            pdv.endereco = info.endereco;
+            if (!pdv.bairro && info.bairro) pdv.bairro = info.bairro;
+            if (!pdv.cidade && info.cidade) pdv.cidade = info.cidade;
+            if (!pdv.uf && info.uf) pdv.uf = info.uf;
+          }
+          await sleep(350);
+        }
+        const pos = await geocodePDV(pdv);
+        await sleep(1100);
+        if (pos) addMarker(pdv, pos.lat, pos.lng);
+        else { failed++; failedList.push(pdv); }
+        done++;
+        updateStats(done, total);
+      }
+    }
+
+    // ── ENRIQUECEDOR ──
+    let enrPdvMap = {}, enrQueue = [], enrIdx = 0, enrRunning = false, enrStopped = false;
+
+    function toggleFailPanel() {
+      const panel = document.getElementById('fail-panel');
+      const isOpen = panel.style.display === 'flex';
+      if (isOpen) { panel.style.display = 'none'; return; }
+      if (!failedList.length) return;
+
+      // Renderiza lista
+      document.getElementById('failPanelSub').textContent = failedList.length + ' PDV' + (failedList.length > 1 ? 's' : '') + ' sem coordenada';
+      const list = document.getElementById('failPanelList');
+      list.innerHTML = failedList.map(p => {
+        const brickShort = p.brick.replace(/^(\d+)\s*-\s*[^-]+-/i, '$1 · ');
+        const cnpjFmt = p.cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+        const motivo = !p.endereco && !p.bairro ? 'sem endereço' : p.endereco ? 'endereço não encontrado' : 'bairro não encontrado';
+        return '<div class="fail-item">'
+          + '<div class="fail-item-name" title="' + p.nome + '">' + p.nome + '</div>'
+          + '<div class="fail-item-brick" title="' + p.brick + '">' + brickShort + '</div>'
+          + '<div class="fail-item-cnpj">' + cnpjFmt + '</div>'
+          + '<div style="font-size:10px;color:#475569;flex-shrink:0">' + motivo + '</div>'
+          + '</div>';
+      }).join('');
+      panel.style.display = 'flex';
+      setTimeout(() => map && map.invalidateSize(), 50);
+    }
+
+    function toggleEnricher() {
+      const enr = document.getElementById('enricher-screen');
+      const layout = document.querySelector('.layout');
+      const statusBar = document.getElementById('status');
+      const progWrap = document.getElementById('prog-wrap');
+      const btn = document.getElementById('btnEnr');
+      const isOpen = enr.style.display === 'flex';
+      enr.style.display = isOpen ? 'none' : 'flex';
+      layout.style.display = isOpen ? 'flex' : 'none';
+      statusBar.style.display = isOpen ? '' : 'none';
+      progWrap.style.display = isOpen ? '' : 'none';
+      btn.classList.toggle('on', !isOpen);
+      if (isOpen) setTimeout(() => map && map.invalidateSize(), 50);
+    }
+
+    (function enrInit() {
+      const drop = document.getElementById('enrDrop');
+      const fi = document.getElementById('enrFileInput');
+      if (!drop || !fi) return;
+      drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+      drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+      drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); if (e.dataTransfer.files[0]) enrLoad(e.dataTransfer.files[0]); });
+      fi.addEventListener('change', () => { if (fi.files[0]) enrLoad(fi.files[0]); });
+    })();
+
+    function enrLoad(file) {
+      enrMsg('');
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const wb = XLSX.read(e.target.result, { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+          if (!rows.length) { enrMsg('Planilha vazia.', true); return; }
+
+          const k = Object.keys(rows[0]);
+          const fc = (...c) => c.map(x => k.find(y => y.trim().toLowerCase() === x.toLowerCase())).find(Boolean);
+          const cS = fc('Setor', 'setor'), cB = fc('Brick', 'brick'), cP = fc('PDV', 'pdv'), cBa = fc('Bandeira', 'bandeira');
+          if (!cS || !cB || !cP) { enrMsg('Colunas obrigatórias não encontradas: Setor, Brick, PDV.', true); return; }
+
+          enrPdvMap = {};
+          rows.forEach(row => {
+            const raw = String(row[cP] || '').trim();
+            const setor = String(row[cS] || '').trim();
+            const brick = String(row[cB] || '').trim();
+            const banda = cBa ? String(row[cBa] || '').trim() : 'N/I';
+            if (!raw || !setor || !brick) return;
+
+            let cnpj = '', nome = '', bairro = '', cidade = '', uf = '';
+            if (raw.includes('|')) {
+              const p = raw.split('|').map(s => s.trim());
+              cnpj = p[0].replace(/\D/g, ''); nome = p[1] || '';
+              const loc = p[2] || '', di = loc.lastIndexOf(' - ');
+              if (di >= 0) {
+                bairro = loc.substring(0, di).trim();
+                const cu = loc.substring(di + 3).trim(), si = cu.indexOf('/');
+                if (si >= 0) { cidade = cu.substring(0, si).trim(); uf = cu.substring(si + 1).trim(); }
+                else cidade = cu;
+              } else bairro = loc;
+            } else { cnpj = raw.replace(/\D/g, '').substring(0, 14); nome = raw; }
+
+            if (!cnpj || cnpj.length < 7) return;
+            const key = cnpj + '||' + brick;
+            if (!enrPdvMap[key]) enrPdvMap[key] = { cnpj, nome, bandeira: banda, setor, brick, bairro, cidade, uf, endereco: '', status: 'pendente' };
+          });
+
+          const uniq = Object.keys(enrPdvMap);
+          if (!uniq.length) { enrMsg('Nenhum PDV válido encontrado.', true); return; }
+
+          document.getElementById('enrBadgeFile').textContent = file.name;
+          document.getElementById('enrBadgeRows').textContent = rows.length + ' linhas';
+          document.getElementById('enrBadgeUniq').textContent = uniq.length + ' PDVs únicos';
+          document.getElementById('enrInfo').style.display = 'flex';
+          document.getElementById('enrActions').style.display = 'flex';
+          document.getElementById('enrStatRow').style.display = 'grid';
+          document.getElementById('enrTableWrap').style.display = 'block';
+          document.getElementById('enrTotal').textContent = uniq.length;
+          document.getElementById('enrPend').textContent = uniq.length;
+          document.getElementById('enrOk').textContent = '0';
+          document.getElementById('enrErr').textContent = '0';
+          enrQueue = [...uniq]; enrIdx = 0;
+          enrRenderTable();
+        } catch (err) { enrMsg('Erro: ' + err.message, true); }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function enrRenderTable() {
+      const tbody = document.getElementById('enrTbody');
+      const entries = Object.values(enrPdvMap).slice(0, 120);
+      tbody.innerHTML = entries.map(p => {
+        const pill = p.status === 'ok'
+          ? '<span class="enr-pill enr-ok">ok</span>'
+          : p.status === 'erro' ? '<span class="enr-pill enr-err">erro</span>'
+            : p.status === 'sem cnpj' ? '<span class="enr-pill enr-skip">s/cnpj</span>'
+              : '<span class="enr-pill enr-pend">pendente</span>';
+        const cf = p.cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+        const br = p.brick.replace(/^(\d+)\s*-\s*[^-]+-/i, '$1 · ');
+        return '<tr><td title="' + p.cnpj + '">' + cf + '</td><td title="' + p.nome + '">' + p.nome + '</td><td title="' + p.brick + '">' + br + '</td><td title="' + p.endereco + '">' + (p.endereco || '—') + '</td><td>' + (p.cidade || '') + (p.uf ? ' / ' + p.uf : '') + '</td><td>' + pill + '</td></tr>';
+      }).join('');
+      const total = Object.keys(enrPdvMap).length;
+      if (total > 120) tbody.innerHTML += '<tr><td colspan="6" style="text-align:center;color:#475569;font-size:10px;padding:8px">… mais ' + (total - 120) + ' PDVs (baixe a planilha para ver todos)</td></tr>';
+    }
+
+    function enrUpdateStats() {
+      const v = Object.values(enrPdvMap);
+      document.getElementById('enrOk').textContent = v.filter(p => p.status === 'ok').length;
+      document.getElementById('enrErr').textContent = v.filter(p => p.status === 'erro' || p.status === 'sem cnpj').length;
+      document.getElementById('enrPend').textContent = v.filter(p => p.status === 'pendente').length;
+    }
+
+    async function enrFetchCNPJ(cnpj) {
+      // Tenta BrasilAPI primeiro (mais rápida e estável)
+      try {
+        const r = await fetch('https://brasilapi.com.br/api/cnpj/v1/' + cnpj);
+        if (r.ok) {
+          const d = await r.json();
+          const logr = [(d.descricao_tipo_de_logradouro || ''), (d.logradouro || '')].filter(Boolean).join(' ');
+          const num = d.numero || 'S/N';
+          if (logr) return {
+            endereco: (logr + ', ' + num).trim(),
+            bairro: d.bairro || '',
+            cidade: d.municipio || '',
+            uf: d.uf || ''
+          };
+        }
+      } catch { /* fallback */ }
+      // Fallback: cnpj.ws
+      try {
+        const r = await fetch('https://publica.cnpj.ws/cnpj/' + cnpj);
+        if (!r.ok) return null;
+        const d = await r.json();
+        const end = d.estabelecimento;
+        if (!end) return null;
+        const logr = [end.tipo_logradouro, end.logradouro].filter(Boolean).join(' ');
+        const num = end.numero || 'S/N';
+        return {
+          endereco: (logr + (num ? ', ' + num : '')).trim(),
+          bairro: end.bairro || '',
+          cidade: end.cidade ? end.cidade.nome : '',
+          uf: end.estado ? end.estado.sigla : ''
+        };
+      } catch { return null; }
+    }
+
+    async function enrStart() {
+      if (enrRunning) return;
+      enrRunning = true; enrStopped = false;
+      document.getElementById('enrBtnStart').style.display = 'none';
+      document.getElementById('enrBtnStop').style.display = '';
+      document.getElementById('enrBtnResume').style.display = 'none';
+      document.getElementById('enrProg').style.display = 'block';
+      document.getElementById('enrBtnExport').disabled = false;
+      enrMsg('');
+      await enrRunQueue();
+    }
+
+    function enrStop() {
+      enrStopped = true; enrRunning = false;
+      document.getElementById('enrBtnStop').style.display = 'none';
+      document.getElementById('enrBtnResume').style.display = '';
+      enrMsg('Pausado em ' + enrIdx + ' de ' + enrQueue.length + '. Clique em Retomar para continuar.');
+    }
+
+    async function enrResume() {
+      if (enrRunning) return;
+      enrRunning = true; enrStopped = false;
+      document.getElementById('enrBtnResume').style.display = 'none';
+      document.getElementById('enrBtnStop').style.display = '';
+      enrMsg('');
+      await enrRunQueue();
+    }
+
+    async function enrRunQueue() {
+      const total = enrQueue.length;
+      for (; enrIdx < total; enrIdx++) {
+        if (enrStopped) return;
+        const key = enrQueue[enrIdx];
+        const pdv = enrPdvMap[key];
+        if (!pdv || pdv.status !== 'pendente') continue;
+
+        if (!pdv.cnpj || pdv.cnpj.length < 11) {
+          pdv.status = 'sem cnpj';
+        } else {
+          const res = await enrFetchCNPJ(pdv.cnpj);
+          if (res && res.endereco) {
+            pdv.endereco = res.endereco;
+            if (!pdv.bairro && res.bairro) pdv.bairro = res.bairro;
+            if (!pdv.cidade && res.cidade) pdv.cidade = res.cidade;
+            if (!pdv.uf && res.uf) pdv.uf = res.uf;
+            pdv.status = 'ok';
+          } else { pdv.status = 'erro'; }
+        }
+
+        const pct = Math.round((enrIdx + 1) / total * 100);
+        document.getElementById('enrProgFill').style.width = pct + '%';
+        document.getElementById('enrProgPct').textContent = pct + '%';
+        document.getElementById('enrProgTxt').textContent = 'Buscando… ' + (enrIdx + 1) + ' / ' + total;
+        enrRenderTable(); enrUpdateStats();
+        await sleep(350);
+      }
+      enrRunning = false;
+      document.getElementById('enrBtnStop').style.display = 'none';
+      document.getElementById('enrBtnStart').style.display = 'none';
+      document.getElementById('enrBtnResume').style.display = 'none';
+      const ok = Object.values(enrPdvMap).filter(p => p.status === 'ok').length;
+      enrMsg('✓ Concluído! ' + ok + ' de ' + total + ' endereços encontrados. Baixe a planilha.');
+    }
+
+    function enrExport() {
+      const pdvs = Object.values(enrPdvMap);
+      const wb = XLSX.utils.book_new();
+      const wsData = [['Setor', 'Brick', 'Bandeira', 'PDV', 'Endereço', 'CNPJ (só dígitos)']];
+      pdvs.forEach(p => {
+        const pdvStr = [p.cnpj, p.nome, (p.bairro || '') + ' - ' + (p.cidade || '') + ' / ' + (p.uf || '')].join(' | ');
+        wsData.push([p.setor, p.brick, p.bandeira, pdvStr, p.endereco, p.cnpj]);
+      });
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      ws['!cols'] = [18, 30, 12, 50, 35, 16].map(w => ({ wch: w }));
+      XLSX.utils.book_append_sheet(wb, ws, 'PDVs');
+      const ws2 = [['CNPJ', 'Nome', 'Setor', 'Brick', 'Status']];
+      pdvs.filter(p => p.status !== 'ok').forEach(p => ws2.push([p.cnpj, p.nome, p.setor, p.brick, p.status]));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ws2), 'Não encontrados');
+      XLSX.writeFile(wb, 'PDVs_enriquecidos.xlsx');
+    }
+
+    function enrReset() {
+      enrStopped = true; enrRunning = false;
+      enrPdvMap = {}; enrQueue = []; enrIdx = 0;
+      ['enrInfo', 'enrActions', 'enrStatRow'].forEach(id => document.getElementById(id).style.display = 'none');
+      document.getElementById('enrProg').style.display = 'none';
+      document.getElementById('enrTableWrap').style.display = 'none';
+      document.getElementById('enrBtnStart').style.display = '';
+      document.getElementById('enrBtnStop').style.display = 'none';
+      document.getElementById('enrBtnResume').style.display = 'none';
+      document.getElementById('enrBtnExport').disabled = true;
+      document.getElementById('enrTbody').innerHTML = '';
+      document.getElementById('enrFileInput').value = '';
+      enrMsg('');
+    }
+
+    function enrMsg(txt, isErr) {
+      const el = document.getElementById('enrMsg');
+      el.textContent = txt;
+      el.className = 'enr-msg' + (isErr ? ' err' : '');
+    }
+  </script>
 </body>
+
 </html>
