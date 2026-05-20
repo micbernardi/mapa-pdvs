@@ -264,13 +264,13 @@ function heExport() {
   const pdvs = Object.values(hePdvMap);
   const wb   = XLSX.utils.book_new();
   // Colunas: Setor · Brick · Nome do PDV · CNPJ · Cidade · Telefone
-  const wsData = [['Setor', 'Brick', 'Nome do PDV', 'CNPJ', 'Cidade', 'Telefone']];
+  const wsData = [['Setor', 'Brick', 'Nome do PDV', 'CNPJ', 'Endereço Completo', 'Cidade', 'Telefone']];
   pdvs.forEach(p => {
     const cnpjFmt = p.cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-    wsData.push([p.setor, p.brick, p.nome, cnpjFmt, p.cidade, p.telefone]);
+    wsData.push([p.setor, p.brick, p.nome, cnpjFmt, p.endereco || '', p.cidade, p.telefone]);
   });
   const ws = XLSX.utils.aoa_to_sheet(wsData);
-  ws['!cols'] = [32, 30, 40, 20, 24, 16].map(w => ({ wch: w }));
+  ws['!cols'] = [32, 30, 40, 20, 40, 24, 16].map(w => ({ wch: w }));
   XLSX.utils.book_append_sheet(wb, ws, 'PDVs Enriquecidos');
   // Aba não encontrados
   const ws2 = [['CNPJ', 'Nome', 'Setor', 'Brick', 'Status']];
@@ -296,13 +296,14 @@ function heRenderTable() {
       + '<td title="' + p.brick + '">' + brickShort + '</td>'
       + '<td title="' + p.nome  + '">' + (p.nome     || '—') + '</td>'
       + '<td>' + cnpjFmt + '</td>'
+      + '<td title="' + (p.endereco || '') + '">' + (p.endereco || '—') + '</td>'
       + '<td>' + (p.cidade   || '—') + '</td>'
       + '<td>' + (p.telefone || '—') + '</td>'
       + '<td>' + pill(p.status) + '</td>'
       + '</tr>';
   }).join('');
   const total = Object.keys(hePdvMap).length;
-  if (total > 150) tbody.innerHTML += '<tr><td colspan="7" style="text-align:center;color:#475569;font-size:10px;padding:8px">… mais ' + (total - 150) + ' PDVs na planilha final</td></tr>';
+  if (total > 150) tbody.innerHTML += '<tr><td colspan="8" style="text-align:center;color:#475569;font-size:10px;padding:8px">… mais ' + (total - 150) + ' PDVs na planilha final</td></tr>';
 }
 
 function heUpdateStats() {
@@ -392,9 +393,8 @@ function processFile(file, ctx) {
 
       const colSetor = findCol('Setor','setor','SETOR');
       const colBrick = findCol('Brick','brick','BRICK');
-      const colPDV   = findCol('PDV','pdv','Pdv');
-      const colEnd   = findCol('Endereço','endereco','Endereco','ENDEREÇO','ENDERECO','endereço');
-      const colCNPJ  = findCol('CNPJ (só dígitos)','CNPJ (so digitos)','cnpj (só dígitos)');
+      const colPDV   = findCol('PDV','pdv','Pdv','Nome do PDV','nome do pdv','NOME DO PDV');      const colEnd   = findCol('Endereço Completo','Endereco Completo','ENDEREÇO COMPLETO','ENDERECO COMPLETO','Endereço','endereco','Endereco','ENDEREÇO','ENDERECO','endereço');
+      const colCNPJ  = findCol('CNPJ (só dígitos)','CNPJ (so digitos)','cnpj (só dígitos)','CNPJ','cnpj','Cnpj');
       const colBand  = findCol('Bandeira','bandeira','BANDEIRA');
 
       if (!colSetor || !colBrick || !colPDV) {
@@ -1149,13 +1149,13 @@ async function enrFetchCNPJ(cnpj) {
 
 function enrExport() {
   const pdvs = Object.values(enrPdvMap), wb = XLSX.utils.book_new();
-  const wsData = [['Setor','Brick','Nome do PDV','CNPJ','Cidade','Telefone']];
+  const wsData = [['Setor','Brick','Nome do PDV','CNPJ','Endereço Completo','Cidade','Telefone']];
   pdvs.forEach(p => {
     const cf = p.cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5');
-    wsData.push([p.setor, p.brick, p.nome, cf, (p.cidade||'')+(p.uf?' / '+p.uf:''), p.telefone||'']);
+    wsData.push([p.setor, p.brick, p.nome, cf, p.endereco||'', (p.cidade||'')+(p.uf?' / '+p.uf:''), p.telefone||'']);
   });
   const ws = XLSX.utils.aoa_to_sheet(wsData);
-  ws['!cols'] = [32,30,40,20,22,16].map(w=>({wch:w}));
+  ws['!cols'] = [32,30,40,20,40,22,16].map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb, ws, 'PDVs Enriquecidos');
   const ws2=[['CNPJ','Nome','Setor','Brick','Status']];
   pdvs.filter(p=>p.status!=='ok').forEach(p=>ws2.push([p.cnpj,p.nome,p.setor,p.brick,p.status]));
